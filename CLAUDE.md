@@ -27,7 +27,7 @@
 ## 문서 종류 (2026-11-24 추가)
 - `TYPES`(name·short·title·lead·desc) + `DOC_TYPES` = 업체 json `types` 배열(없으면 기본 quote·stmt·receipt, contract:true면 계약서 추가). 홈 버튼·작성 화면 종류 버튼은 DOC_TYPES로 자동 생성(4개면 2×2). 목록에 없는 예전 종류 기록(대성의 거래명세서 등)도 열면 버튼이 하나 더 붙어서 계속 열 수 있음.
 - 대성: `types: [quote, receipt, contract, report]` — 사장님 요청으로 거래명세서 빼고 영수증 넣음.
-- **영수증(receipt)**: 견적서 틀 그대로 + 영수일자·성명(귀하)·결제 방법(`doc.method`) 줄, 「아래 금액을 정히 영수합니다.」, 띠 이름 「영수금액」, 품목 최소 4줄, 입금 계좌 줄 없음. 기본 비고 = 설정 `memoR`.
+- **영수증(receipt)**: 세로형 전용 `drawReceipt()`(종이 폭 `docW()`=1120, 다른 문서는 1400). 받는 분(귀하/귀중) → 영수금액 상자(한글·숫자) → 「위 금액을 정히 영수합니다.」 → 내역 표(`itemsTable`) → 결제 방법(`doc.method`)·비고 → 날짜 → 공급자 표 + 도장. 입금 계좌 없음. 기본 비고 = 설정 `memoR`. 표 도우미 `kv()`는 영수증·소견서 공용.
 - **기술소견서(report)**: 사장님이 준 종이 양식(검사내역·누수 원인·신청인·검사업체·작성일·작성자 명판직인)을 바탕으로 `drawReport()`. `doc.rp` = item·place(검사 장소)·phone·loc·cause·date(탐지)·fix(수리)·note(소견 및 조치)·staff·photos. 현장 사진 최대 4장(긴 쪽 1000px JPEG 0.72), **사진은 cur에만 있고 「작성한 기록」(DOCS)·?doc 이관에는 저장 안 함(저장 공간)**. 작성 화면에서 품목·부가세·안내 문구·개인/사업자 칸은 숨김.
 
 ## 공사 계약서 (contract)

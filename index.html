@@ -1031,8 +1031,9 @@ function fitFont(ctx, text, maxW, size, weight) {
 
 // 문서 논리 폭: 글자 크기는 그대로 두고 종이를 넓혀 A4 문서 비율로 보이게 함(1080이면 글자가 너무 커 보였음)
 const DOC_W = 1400;
+const docW = doc => doc.type === 'receipt' ? 1120 : DOC_W;   // 영수증은 좁은 세로형 종이
 function drawDoc(ctx, doc, H) {
-  const W = DOC_W, M = 68, R = W - M, CW = W - 2 * M;
+  const W = docW(doc), M = 68, R = W - M, CW = W - 2 * M;
   const t = TYPES[doc.type], c = calc(doc);
   const INK = '#1b1b1d', SUB = '#5b5c62', LINE = '#9a978f', SOFT = '#eef2f8', MAIN = '#1f4e8c', HEAD = '#e3e9f2', THIN = '#c9c6be';
   const font = (s, w = 400) => ctx.font = `${w} ${s}px ${FONT}`;
@@ -1122,31 +1123,104 @@ function drawDoc(ctx, doc, H) {
   y = 180;
 
   /* ===== 기술소견서 (예시 양식: 검사 내역 · 신청인 · 검사 업체 + 현장 사진 · 작성일 · 작성자 직인) ===== */
+  // 이름칸 + 내용칸 표. 한 줄에 칸 1~2쌍
+  const kv = (y, rows, LCW = 200) => {
+    hline(M, R, y, 2.5, INK);
+    rows.forEach((row, ri) => {
+      const pw = CW / row.length;
+      font(24);
+      const cells = row.map(([l, v, b]) => { font(24, b ? 700 : 400); return { l, b, v: wrap(ctx, String(v || '').trim(), pw - LCW - 28) }; });
+      const h = Math.max(60, ...cells.map(c => c.v.length * 35 + 24));
+      cells.forEach((c, i) => {
+        const x = M + i * pw;
+        box(x, y, LCW, h, SOFT, null);
+        if (i) vline(x, y, y + h, 1.5, LINE);
+        vline(x + LCW, y, y + h, 1, THIN);
+        font(22, 700); const ll = c.l.split('\n');
+        ll.forEach((t2, j) => text(t2, x + LCW / 2, y + h / 2 + (j - (ll.length - 1) / 2) * 28, 'center', SUB));
+        font(24, c.b ? 700 : 400); c.v.forEach((ln, j) => text(ln, x + LCW + 16, y + h / 2 + (j - (c.v.length - 1) / 2) * 35, 'left'));
+      });
+      y += h;
+      hline(M, R, y, ri === rows.length - 1 ? 2.5 : 1, ri === rows.length - 1 ? INK : THIN);
+    });
+    return y;
+  };
+
+  /* ===== 영수증 (세로형: 받는 분 → 금액 → 영수 문구 → 내역 → 결제 방법·비고 → 날짜 → 공급자·도장) ===== */
+  function drawReceipt(y) {
+    const isB = doc.ck === 'b', cb = doc.cb || {}, cust = (doc.customer || '').trim();
+    // 받는 분
+    let cs = 40; font(cs, 800); let cl = wrap(ctx, cust, CW - 110);
+    if (cl.length > 1) { cs = 32; font(cs, 800); cl = wrap(ctx, cust, CW - 90); }
+    cl.forEach((ln, i) => {
+      const yy = y + 24 + i * (cs + 12);
+      text(ln, M + 6, yy, 'left');
+      if (i === cl.length - 1) { const w = ctx.measureText(ln).width; font(cs - 12, 600); text(isB ? '귀중' : '귀하', M + 6 + w + 14, yy + 3, 'left', SUB); font(cs, 800); }
+    });
+    y += cl.length * (cs + 12) + 14;
+    hline(M, R, y, 2.5, INK);
+    if (isB && (cb.biz || cb.owner)) {
+      font(21); text([cb.biz ? '등록번호 ' + cb.biz : '', cb.owner ? '대표 ' + cb.owner : ''].filter(Boolean).join('   ·   '), M + 6, y + 26, 'left', SUB);
+      y += 40;
+    }
+    y += 34;
+
+    // 금액
+    const AH = doc.vat === 'none' ? 186 : 214, words = wonWords(c.total), nums = '₩' + won(c.total);
+    box(M, y, CW, AH, SOFT, INK, 2);
+    font(23, 700); text('영 수 금 액', W / 2, y + 38, 'center', SUB);
+    fitFont(ctx, words, CW - 80, 34, 800); text(words, W / 2, y + 92, 'center');
+    fitFont(ctx, nums, CW - 80, 48, 800); text(nums, W / 2, y + 148, 'center', MAIN);
+    if (doc.vat !== 'none') { font(20); text('(부가세 포함)', W / 2, y + 190, 'center', SUB); }
+    y += AH + 40;
+    font(29, 800); text('위 금액을 정히 영수합니다.', W / 2, y + 18, 'center');
+    y += 78;
+
+    // 내역
+    font(24, 800); text('내  역', M + 4, y + 16, 'left'); y += 42;
+    y = itemsTable(y) + 30;
+    const info = [['결제 방법', doc.method || '계좌이체']];
+    if ((doc.memo || '').trim()) info.push(['비  고', doc.memo.trim()]);
+    y = kv(y, info.map(r => [r]), 170) + 44;
+
+    // 날짜
+    font(30, 800); text(dateKo(doc.date), W / 2, y + 20, 'center'); y += 76;
+
+    // 공급자(영수인) 표 + 도장
+    const VC = 46, LC = 150, VX = M + VC + LC, VW = R - VX;
+    const rows = [['상  호', SET.name || '', 1]];
+    if (SET.owner) rows.push(['대 표 자', SET.owner, 'owner']);
+    if (SET.biz) rows.push(['등록번호', SET.biz]);
+    if (SET.addr) rows.push(['주  소', SET.addr]);
+    if (SET.phone) rows.push(['연 락 처', SET.phone]);
+    font(24);
+    const rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 140); return Math.max(56, r.lines.length * 32 + 24); });
+    const tH = rh.reduce((a, b) => a + b, 0);
+    box(M, y, VC, tH, SOFT, null); box(M + VC, y, LC, tH, SOFT, null); box(M, y, CW, tH, null, INK, 2);
+    vline(M + VC, y, y + tH); vline(VX, y, y + tH);
+    font(23, 700);
+    ['공', '급', '자'].forEach((ch, i) => text(ch, M + VC / 2, y + tH / 2 + (i - 1) * Math.min(38, tH / 3.4), 'center'));
+    let ry = y, stampRow = null;
+    rows.forEach((r, i) => {
+      if (i) hline(M + VC, R, ry);
+      font(22, 700); text(r[0], M + VC + LC / 2, ry + rh[i] / 2, 'center', SUB);
+      font(24, r[2] ? 700 : 400);
+      r.lines.forEach((ln, j) => text(ln, VX + 16, ry + rh[i] / 2 + (j - (r.lines.length - 1) / 2) * 32, 'left'));
+      if (r[2] === 'owner' || (!SET.owner && r[2] === 1)) stampRow = { y: ry, h: rh[i], w: ctx.measureText(r.lines[r.lines.length - 1]).width };
+      ry += rh[i];
+    });
+    if (stampRow) {
+      const mx = VX + 16 + stampRow.w + 56;
+      font(22); text('(인)', mx, stampRow.y + stampRow.h / 2, 'center', '#9a9a9a');
+      if (stampImg) fitImg(stampImg, mx, stampRow.y + stampRow.h / 2, 88, 88, 'center', 0.92);
+    }
+    y += tH + 10;
+    return footer(y);
+  }
+
   function drawReport(y) {
     const rp = Object.assign(newRp(), doc.rp || {});
     const sec = (s, y) => { font(27, 800); text(s, M, y + 18, 'left'); return y + 50; };
-    // 이름칸 + 내용칸 표. 한 줄에 칸 1~2쌍
-    const kv = (y, rows, LCW = 200) => {
-      hline(M, R, y, 2.5, INK);
-      rows.forEach((row, ri) => {
-        const pw = CW / row.length;
-        font(24);
-        const cells = row.map(([l, v, b]) => { font(24, b ? 700 : 400); return { l, b, v: wrap(ctx, String(v || '').trim(), pw - LCW - 28) }; });
-        const h = Math.max(60, ...cells.map(c => c.v.length * 35 + 24));
-        cells.forEach((c, i) => {
-          const x = M + i * pw;
-          box(x, y, LCW, h, SOFT, null);
-          if (i) vline(x, y, y + h, 1.5, LINE);
-          vline(x + LCW, y, y + h, 1, THIN);
-          font(22, 700); const ll = c.l.split('\n');
-          ll.forEach((t2, j) => text(t2, x + LCW / 2, y + h / 2 + (j - (ll.length - 1) / 2) * 28, 'center', SUB));
-          font(24, c.b ? 700 : 400); c.v.forEach((ln, j) => text(ln, x + LCW + 16, y + h / 2 + (j - (c.v.length - 1) / 2) * 35, 'left'));
-        });
-        y += h;
-        hline(M, R, y, ri === rows.length - 1 ? 2.5 : 1, ri === rows.length - 1 ? INK : THIN);
-      });
-      return y;
-    };
     y = sec('1. 검사 내역', y);
     y = kv(y, [
       [['검사 항목', rp.item, 1]],
@@ -1385,6 +1459,7 @@ function drawDoc(ctx, doc, H) {
 
   /* ===== 기술소견서 ===== */
   if (doc.type === 'report') return drawReport(y);
+  if (doc.type === 'receipt') return drawReceipt(y);
 
   /* ===== 견적서 · 거래명세서 · 영수증 ===== */
   const isQ = doc.type === 'quote', isRc = doc.type === 'receipt';
@@ -1543,9 +1618,9 @@ function makeImage(doc) {
   const m = document.createElement('canvas'); m.width = 10; m.height = 10;
   const H = Math.ceil(drawDoc(m.getContext('2d'), doc, 10));
   // 사진 가로 1680픽셀. 아이폰 사파리는 캔버스 넓이 한도(약 1,670만 픽셀)를 넘으면 그림이 안 만들어지므로 아주 긴 문서는 조금 줄임
-  const S = Math.min(1680 / DOC_W, Math.sqrt(15e6 / (DOC_W * H)));
+  const DW = docW(doc), S = Math.min(1680 / DOC_W, Math.sqrt(15e6 / (DW * H)));
   const cv = document.createElement('canvas');
-  cv.width = Math.round(DOC_W * S); cv.height = Math.round(H * S);
+  cv.width = Math.round(DW * S); cv.height = Math.round(H * S);
   const ctx = cv.getContext('2d'); ctx.scale(S, S);
   drawDoc(ctx, doc, H);
   return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'));
