@@ -75,6 +75,16 @@ textarea.t{min-height:96px;resize:vertical}
 .hist .open .r1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tag{font-size:.78rem;font-weight:700;border-radius:5px;padding:2px 7px;background:var(--main-soft);color:var(--main)}
 .tag.stmt{background:#e9f4ec;color:var(--ok)}
+.tag.contract{background:#f6ecdf;color:#8a4b08}
+.seg.three{grid-template-columns:1fr 1fr 1fr}
+.seg.three button{font-size:.95rem;padding:0 4px}
+.sign-prev{height:110px;border:2px dashed #bdb8ad;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);margin-bottom:10px}
+.sign-prev img{max-height:96px;max-width:90%}
+.sign-modal{position:fixed;inset:0;z-index:60;background:#fff;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)}
+.sign-modal .sm-t{font-size:1.15rem;font-weight:800;margin-bottom:4px}
+.sign-modal .sm-s{color:var(--sub);font-size:.9rem;margin-bottom:12px}
+.sign-modal canvas{flex:1;min-height:220px;max-height:420px;width:100%;border:3px solid var(--main);border-radius:10px;background:#fff;touch-action:none}
+.sign-modal .sm-b{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .hist .who{font-weight:700;font-size:1.02rem}
 .hist .r2{color:var(--sub);font-size:.88rem;margin-top:2px}
 .hist .del{background:none;border:none;border-left:1px solid var(--line);color:var(--sub);padding:0 14px;font-size:.88rem;min-width:64px}
@@ -96,6 +106,7 @@ textarea.t{min-height:96px;resize:vertical}
 .item .ih b{font-size:.98rem}
 .item .rm{background:#fff;border:2px solid #d9b4b1;color:var(--danger);border-radius:8px;padding:4px 12px;min-height:44px;font-weight:700;font-size:.88rem}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.row2>div{min-width:0}
 .row2 .lb{font-size:.86rem;font-weight:700;color:var(--sub);margin-bottom:4px}
 .qty{display:flex;align-items:stretch}
 .qty button{flex:none;width:40px;border:2px solid #bdb8ad;background:#fff;font-size:1.4rem;font-weight:700;line-height:1}
@@ -110,7 +121,7 @@ textarea.t{min-height:96px;resize:vertical}
 .add{width:100%;min-height:62px;border:2px dashed var(--main);background:#fff;color:var(--main);border-radius:10px;font-weight:700;font-size:1.08rem}
 .add:active{background:var(--main-soft)}
 .sum{border:2px solid var(--main);border-radius:10px;background:#fff;padding:14px 16px}
-.sum .l{display:flex;justify-content:space-between;padding:4px 0;font-size:1rem}
+.sum .l{display:flex;justify-content:space-between;gap:10px;white-space:nowrap;padding:4px 0;font-size:1rem}
 .sum .l.tot{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-size:1.2rem;font-weight:800;color:var(--main)}
 .sum .words{text-align:right;color:var(--sub);font-size:.86rem}
 
@@ -156,6 +167,7 @@ textarea.t{min-height:96px;resize:vertical}
 
     <button class="big" data-new="quote"><b>견적서 쓰기</b><span>일을 하기 전에 금액을 알려 드릴 때</span></button>
     <button class="big" data-new="stmt"><b>거래명세서 쓰기</b><span>물건을 보내거나 일을 마친 뒤</span></button>
+    <button class="big" data-new="contract" id="newContract" hidden><b>공사 계약서 쓰기</b><span>공사를 맡기로 정했을 때</span></button>
 
     <div class="sec-title">작성한 기록</div>
     <ul class="hist" id="histList"></ul>
@@ -169,14 +181,41 @@ textarea.t{min-height:96px;resize:vertical}
       <div class="seg" id="typeSeg">
         <button data-type="quote">견적서</button>
         <button data-type="stmt">거래명세서</button>
+        <button data-type="contract" hidden>계약서</button>
       </div>
 
-      <label class="f" for="wCustomer">받는 분 <small>(손님 이름 또는 상호)</small></label>
+      <label class="f" for="wCustomer" id="lblCust">받는 분 <small>(손님 이름 또는 상호)</small></label>
       <input class="t" id="wCustomer" list="custList" autocomplete="off" placeholder="예) 김철수 / 행복식당">
       <datalist id="custList"></datalist>
 
-      <label class="f" for="wDate">날짜</label>
+      <label class="f" for="wDate" id="lblDate">날짜</label>
       <input class="t" id="wDate" type="date">
+    </div>
+
+    <div class="card" id="ctCard" hidden>
+      <h2>계약 내용</h2>
+      <label class="f" for="cTitle">공사 이름</label>
+      <input class="t" id="cTitle" placeholder="예) 302호 욕실·난방 공사">
+      <label class="f" for="cPlace">공사 장소</label>
+      <input class="t" id="cPlace" placeholder="예) 마포구 ○○아파트 302호">
+      <label class="f" for="cPhone">손님 연락처 <small>(선택)</small></label>
+      <input class="t" id="cPhone" inputmode="tel" placeholder="010-0000-0000">
+      <label class="f" for="cStart">공사 시작일</label>
+      <input class="t" id="cStart" type="date">
+      <label class="f" for="cEnd">공사 끝나는 날</label>
+      <input class="t" id="cEnd" type="date">
+      <p class="hint">날짜를 비워 두면 「양측이 협의하여 정함」으로 들어갑니다.</p>
+      <div class="row2">
+        <div><label class="f" for="cDep">계약금</label>
+          <select class="t" id="cDep"><option value="0">없음</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option></select></div>
+        <div><label class="f" for="cMid">중도금</label>
+          <select class="t" id="cMid"><option value="0">없음</option><option value="10">10%</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option></select></div>
+      </div>
+      <label class="f" for="cBal">잔금 받는 때</label>
+      <select class="t" id="cBal"><option value="0">공사 끝나는 날</option><option value="3">공사 끝나고 3일 안에</option><option value="7">공사 끝나고 7일 안에</option></select>
+      <div class="sum" id="paySum" style="margin-top:12px"></div>
+      <label class="f" for="cWar">하자보수 기간</label>
+      <select class="t" id="cWar"><option>6개월</option><option>1년</option><option>2년</option></select>
     </div>
 
     <div class="card">
@@ -197,8 +236,16 @@ textarea.t{min-height:96px;resize:vertical}
     </div>
 
     <div class="card">
-      <label class="f" for="wMemo">안내 문구 <small>(없으면 비워 두세요)</small></label>
+      <label class="f" for="wMemo" id="lblMemo">안내 문구 <small>(없으면 비워 두세요)</small></label>
       <textarea class="t" id="wMemo" placeholder="예) 견적 유효기간: 발행일로부터 30일"></textarea>
+    </div>
+
+    <div class="card" id="signCard" hidden>
+      <h2>손님 서명 <small style="font-weight:400;color:var(--sub);font-size:.85rem">(선택)</small></h2>
+      <div class="sign-prev" id="signPrev">아직 서명이 없습니다</div>
+      <button class="btn line" id="signBtn">손님께 휴대폰을 드리고 서명 받기</button>
+      <button class="btn ghost" id="signDel" hidden>서명 지우기</button>
+      <p class="hint">현장에서 바로 서명을 받을 수 있습니다. 서명 없이 카카오톡으로 보내면, 손님께 「계약 내용에 동의합니다」라고 답장해 달라는 문구가 계약서에 들어갑니다.</p>
     </div>
   </section>
 
@@ -269,6 +316,10 @@ textarea.t{min-height:96px;resize:vertical}
       <textarea class="t" id="sMemoQ"></textarea>
       <label class="f" for="sMemoS">거래명세서 안내 문구</label>
       <textarea class="t" id="sMemoS" placeholder="예) 입금 확인 후 세금계산서를 발행합니다."></textarea>
+      <div id="memoCWrap" hidden>
+        <label class="f" for="sMemoC">계약서 특약사항</label>
+        <textarea class="t" id="sMemoC" placeholder="예) 폐기물 처리비 포함"></textarea>
+      </div>
     </div>
   </section>
 </main>
@@ -287,6 +338,14 @@ textarea.t{min-height:96px;resize:vertical}
   <button class="btn" id="saveSet">저장하기</button>
 </div></div>
 
+<div class="sign-modal" id="signModal" hidden>
+  <div class="sm-t">아래 네모 칸에 손가락으로 서명해 주세요</div>
+  <div class="sm-s">이름을 크게 써 주시면 됩니다.</div>
+  <canvas id="signPad"></canvas>
+  <button class="btn" id="signOk" style="margin-top:12px">서명 완료</button>
+  <div class="sm-b"><button class="btn line" id="signClear">다시 쓰기</button><button class="btn line" id="signCancel">취소</button></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -298,11 +357,12 @@ const FONT = '-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans 
 const TYPES = {
   quote: { name: '견적서', title: '견   적   서', lead: '아래와 같이 견적합니다.' },
   stmt:  { name: '거래명세서', title: '거 래 명 세 서', lead: '아래와 같이 거래합니다.' },
+  contract: { name: '공사 계약서', title: '공 사 계 약 서', lead: '' },
 };
 const DEFAULT_SET = {
   name: '', owner: '', biz: '', phone: '', addr: '', kind: '', item: '',
   bank: '', account: '', holder: '', stamp: '',
-  vat: 'add', memoQ: '견적 유효기간: 발행일로부터 30일', memoS: '',
+  vat: 'add', memoQ: '견적 유효기간: 발행일로부터 30일', memoS: '', memoC: '',
 };
 
 /* ---------- 저장소 ---------- */
@@ -310,6 +370,7 @@ const DEFAULT_SET = {
 const PRESET = window.EQ_PRESET || {};
 const KEY = 'eq_' + (PRESET.id ? PRESET.id + '_' : '');
 const APP_NAME = PRESET.appName || '간편 견적서';
+const HAS_CONTRACT = !!PRESET.contract;
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) {
@@ -320,7 +381,7 @@ const LS = {
 let SET = Object.assign({}, DEFAULT_SET, PRESET.settings || {}, LS.get('settings', {}));
 let DOCS = LS.get('docs', []);
 let cur = LS.get('cur', null);
-let stampImg = null;
+let stampImg = null, signImg = null;
 let shareFile = null, shareURL = null;
 
 /* ---------- 도우미 ---------- */
@@ -379,6 +440,24 @@ function wonWords(n) {
   return '일금 ' + s + '원정';
 }
 
+const memoFor = type => ({ quote: SET.memoQ, stmt: SET.memoS, contract: SET.memoC })[type] || '';
+function josa(w, withF, noF) {      // 받침 있으면 withF(과/은), 없으면 noF(와/는)
+  const code = String(w || '').trim().slice(-1).charCodeAt(0) - 0xAC00;
+  if (!(code >= 0 && code <= 11171)) return withF + '(' + noF + ')';
+  return code % 28 ? withF : noF;
+}
+const newCt = () => ({ title: '', place: '', phone: '', start: '', end: '', dep: 30, mid: 0, bal: '3', war: '1년', sign: '', signKey: '' });
+const BAL_TXT = { '0': '공사가 끝나는 날', '3': '공사가 끝나고 3일 안에', '7': '공사가 끝나고 7일 안에' };
+function payPlan(doc) {
+  const t = calc(doc).total, ct = doc.ct || newCt();
+  const r = v => t >= 100000 ? Math.round(v / 1000) * 1000 : Math.round(v);
+  const dep = r(t * (+ct.dep || 0) / 100), mid = r(t * (+ct.mid || 0) / 100);
+  return { total: t, dep, mid, bal: t - dep - mid };
+}
+function signKey(doc) {             // 서명한 뒤 내용이 바뀌었는지 확인용
+  const ct = Object.assign({}, doc.ct); delete ct.sign; delete ct.signKey;
+  return JSON.stringify([doc.customer, doc.date, doc.items, doc.vat, doc.memo, ct]);
+}
 function calc(doc) {
   const sum = doc.items.reduce((a, it) => a + Math.round(num(it.qty) * num(it.price)), 0);
   let supply, vat, total;
@@ -406,7 +485,7 @@ function render() {
   window.scrollTo(0, 0);
   ({ home: enterHome, write: enterWrite, preview: enterPreview, settings: enterSettings })[v]();
 }
-window.addEventListener('hashchange', render);
+window.addEventListener('hashchange', () => { closeSign(); render(); });
 $('#backBtn').onclick = back;
 $('#setBtn').onclick = () => go('settings');
 document.addEventListener('click', e => {
@@ -417,6 +496,7 @@ document.addEventListener('click', e => {
 /* ---------- 홈 ---------- */
 function enterHome() {
   $('#firstNotice').hidden = !!SET.name;
+  $('#newContract').hidden = !HAS_CONTRACT;
   const ul = $('#histList');
   if (!DOCS.length) { ul.innerHTML = '<li class="empty" style="display:block">아직 작성한 기록이 없습니다.</li>'; return; }
   ul.innerHTML = DOCS.map(d => `
@@ -445,8 +525,9 @@ function newDoc(type) {
   cur = {
     id: uid(), type, customer: '', date: today(),
     items: [{ name: '', qty: '1', price: '' }],
-    vat: SET.vat, memo: type === 'quote' ? SET.memoQ : SET.memoS,
+    vat: SET.vat, memo: memoFor(type),
   };
+  if (type === 'contract') cur.ct = newCt();
   LS.set('cur', cur); go('write');
 }
 
@@ -462,6 +543,7 @@ function enterWrite() {
   $('#wCustomer').value = cur.customer; $('#wCustomer').classList.remove('err');
   $('#wDate').value = cur.date;
   $('#wMemo').value = cur.memo || '';
+  applyTypeUI();
   $$('#vatRadio input').forEach(r => { r.checked = r.value === cur.vat; r.parentElement.classList.toggle('on', r.checked); });
   const custs = [...new Set(DOCS.map(d => d.customer).filter(Boolean))];
   $('#custList').innerHTML = custs.map(c => `<option value="${esc(c)}">`).join('');
@@ -469,6 +551,85 @@ function enterWrite() {
   renderItems(); renderSum();
 }
 function saveCur() { LS.set('cur', cur); }
+
+const CF = { cTitle: 'title', cPlace: 'place', cPhone: 'phone', cStart: 'start', cEnd: 'end', cDep: 'dep', cMid: 'mid', cBal: 'bal', cWar: 'war' };
+function applyTypeUI() {
+  const isC = cur.type === 'contract';
+  $('#typeSeg').classList.toggle('three', HAS_CONTRACT);
+  $('#typeSeg [data-type="contract"]').hidden = !HAS_CONTRACT;
+  $('#ctCard').hidden = !isC; $('#signCard').hidden = !isC;
+  $('#lblCust').innerHTML = isC ? '손님 이름 <small>(공사를 맡기는 분)</small>' : '받는 분 <small>(손님 이름 또는 상호)</small>';
+  $('#lblDate').textContent = isC ? '계약하는 날' : '날짜';
+  $('#lblMemo').innerHTML = isC ? '특약사항 <small>(따로 약속한 내용 · 없으면 비워 두세요)</small>' : '안내 문구 <small>(없으면 비워 두세요)</small>';
+  $('#wMemo').placeholder = isC ? '예) 기존 타일 철거·폐기물 처리 포함' : '예) 견적 유효기간: 발행일로부터 30일';
+  if (isC) {
+    if (!cur.ct) cur.ct = newCt();
+    Object.entries(CF).forEach(([id, k]) => $('#' + id).value = cur.ct[k] ?? '');
+    renderPay(); showSign();
+  }
+}
+function renderPay() {
+  if (cur.type !== 'contract' || !cur.ct) return;
+  const p = payPlan(cur), ct = cur.ct;
+  let h = `<div class="l"><span>계약금 ${ct.dep}%</span><span>${won(p.dep)}원</span></div>`;
+  if (+ct.mid) h += `<div class="l"><span>중도금 ${ct.mid}%</span><span>${won(p.mid)}원</span></div>`;
+  h += `<div class="l tot"><span>잔금</span><span>${won(p.bal)}원</span></div>`;
+  $('#paySum').innerHTML = h;
+}
+function showSign() {
+  const sg = cur.ct && cur.ct.sign;
+  $('#signPrev').innerHTML = sg ? `<img src="${sg}" alt="손님 서명">` : '아직 서명이 없습니다';
+  $('#signDel').hidden = !sg;
+  $('#signBtn').textContent = sg ? '서명 다시 받기' : '손님께 휴대폰을 드리고 서명 받기';
+}
+function onCt(e) {
+  const k = CF[e.target.id]; if (!k) return;
+  if (k === 'phone') e.target.value = fmtPhone(e.target.value);
+  cur.ct[k] = (k === 'dep' || k === 'mid') ? +e.target.value : e.target.value;
+  if (+cur.ct.dep + +cur.ct.mid > 100) { cur.ct.mid = 100 - cur.ct.dep; $('#cMid').value = cur.ct.mid; }
+  renderPay(); saveCur();
+}
+$('#ctCard').addEventListener('input', onCt);
+$('#ctCard').addEventListener('change', onCt);
+
+/* 손님 서명 받기 */
+const pad = $('#signPad'); let pctx = null, drawing = false, strokes = 0, last = null, padRect = null;
+function openSign() {
+  $('#signModal').hidden = false; document.body.style.overflow = 'hidden';
+  const r = pad.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  pad.width = Math.round(r.width * dpr); pad.height = Math.round(r.height * dpr);
+  pctx = pad.getContext('2d'); pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pctx.lineWidth = 3.4; pctx.lineCap = 'round'; pctx.lineJoin = 'round'; pctx.strokeStyle = pctx.fillStyle = '#111';
+  strokes = 0;
+}
+function closeSign() { $('#signModal').hidden = true; document.body.style.overflow = ''; drawing = false; }
+const ptOf = e => ({ x: e.clientX - padRect.left, y: e.clientY - padRect.top });
+pad.addEventListener('pointerdown', e => {
+  e.preventDefault(); padRect = pad.getBoundingClientRect(); drawing = true; pad.setPointerCapture(e.pointerId);
+  last = ptOf(e); pctx.beginPath(); pctx.arc(last.x, last.y, 1.7, 0, 7); pctx.fill(); strokes++;
+});
+pad.addEventListener('pointermove', e => {
+  if (!drawing) return; e.preventDefault();
+  const p = ptOf(e); pctx.beginPath(); pctx.moveTo(last.x, last.y); pctx.lineTo(p.x, p.y); pctx.stroke(); last = p;
+});
+['pointerup', 'pointercancel'].forEach(ev => pad.addEventListener(ev, () => { drawing = false; }));
+$('#signBtn').onclick = openSign;
+$('#signClear').onclick = () => { pctx.clearRect(0, 0, pad.width, pad.height); strokes = 0; };
+$('#signCancel').onclick = closeSign;
+$('#signDel').onclick = () => { if (!confirm('서명을 지울까요?')) return; cur.ct.sign = ''; cur.ct.signKey = ''; showSign(); saveCur(); };
+$('#signOk').onclick = () => {
+  if (!strokes) { toast('서명을 해 주세요.'); return; }
+  const W = pad.width, H = pad.height, d = pctx.getImageData(0, 0, W, H).data;
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) { toast('서명을 해 주세요.'); return; }
+  const m = 10; x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(W - 1, x1 + m); y1 = Math.min(H - 1, y1 + m);
+  const out = document.createElement('canvas'), sc = Math.min(1, 600 / (x1 - x0 + 1));
+  out.width = Math.round((x1 - x0 + 1) * sc); out.height = Math.round((y1 - y0 + 1) * sc);
+  out.getContext('2d').drawImage(pad, x0, y0, x1 - x0 + 1, y1 - y0 + 1, 0, 0, out.width, out.height);
+  cur.ct.sign = out.toDataURL('image/png'); cur.ct.signKey = signKey(cur);
+  saveCur(); showSign(); closeSign(); toast('서명을 받았습니다.');
+};
 
 function renderItems() {
   $('#items').innerHTML = cur.items.map((it, i) => `
@@ -497,6 +658,7 @@ function renderSum() {
   if (cur.vat !== 'none') h += `<div class="l"><span>공급가액</span><span>${won(c.supply)}원</span></div><div class="l"><span>부가세</span><span>${won(c.vat)}원</span></div>`;
   h += `<div class="l tot"><span>합계</span><span>${won(c.total)}원</span></div><div class="words">${wonWords(c.total)}</div>`;
   $('#sumBox').innerHTML = h;
+  renderPay();
 }
 
 $('#items').addEventListener('input', e => {
@@ -533,10 +695,14 @@ $('#addItem').onclick = () => {
 $('#typeSeg').addEventListener('click', e => {
   const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === cur.type) return;
   const old = cur.type; cur.type = b.dataset.type;
+  // 이미 기록에 있는 문서면 새 문서로 복사 (견적서 → 계약서로 바꿔도 견적서 기록은 남음)
+  if (DOCS.some(d => d.id === cur.id)) { cur.id = uid(); cur.date = today(); $('#wDate').value = cur.date; }
   // 안내 문구가 기본값 그대로면 종류에 맞게 바꿔 줌
-  if ((cur.memo || '') === (old === 'quote' ? SET.memoQ : SET.memoS)) { cur.memo = cur.type === 'quote' ? SET.memoQ : SET.memoS; $('#wMemo').value = cur.memo; }
+  if ((cur.memo || '') === memoFor(old)) { cur.memo = memoFor(cur.type); $('#wMemo').value = cur.memo; }
+  if (cur.type === 'contract' && !cur.ct) cur.ct = newCt();
   $$('#typeSeg button').forEach(x => x.classList.toggle('on', x === b));
-  $('#topTitle').textContent = TYPES[cur.type].name + ' 쓰기'; saveCur();
+  $('#topTitle').textContent = TYPES[cur.type].name + ' 쓰기';
+  applyTypeUI(); saveCur();
 });
 $('#wCustomer').addEventListener('input', e => { cur.customer = e.target.value; e.target.classList.remove('err'); saveCur(); });
 $('#wDate').addEventListener('change', e => { cur.date = e.target.value || today(); saveCur(); });
@@ -555,6 +721,10 @@ $('#toPreview').onclick = () => {
     const el = $(`.item[data-i="${firstBad}"] [data-f="name"]`); el.classList.add('err');
     el.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast(`${firstBad + 1}번 품목 이름을 적어 주세요.`); return;
   }
+  if (cur.type === 'contract' && cur.ct && cur.ct.sign && cur.ct.signKey !== signKey(cur)) {
+    cur.ct.sign = ''; cur.ct.signKey = ''; showSign();
+    alert('서명을 받은 뒤 계약 내용이 바뀌어서 서명을 지웠습니다.\n바뀐 내용으로 서명을 다시 받아 주세요.');
+  }
   // 기록에 저장 (같은 문서면 덮어쓰기)
   cur.savedAt = Date.now();
   DOCS = [JSON.parse(JSON.stringify(cur)), ...DOCS.filter(d => d.id !== cur.id)].slice(0, 300);
@@ -572,6 +742,7 @@ async function enterPreview() {
   $('#shareBtn').disabled = true;
   try {
     await loadStamp();
+    signImg = await loadImg(cur.type === 'contract' && cur.ct ? cur.ct.sign : '');
     if (gen !== previewGen) return;
     const blob = await makeImage(cur);
     if (gen !== previewGen) return;
@@ -604,6 +775,9 @@ function download() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 
+function loadImg(src) {
+  return new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+}
 function loadStamp() {
   return new Promise(res => {
     if (!SET.stamp) { stampImg = null; return res(); }
@@ -638,15 +812,76 @@ function fitFont(ctx, text, maxW, size, weight) {
 function drawDoc(ctx, doc, H) {
   const W = 1080, M = 56, R = W - M, CW = W - 2 * M;
   const t = TYPES[doc.type], c = calc(doc);
-  const INK = '#1b1b1d', SUB = '#5b5c62', LINE = '#9a978f', SOFT = '#eef2f8', MAIN = '#1f4e8c';
+  const INK = '#1b1b1d', SUB = '#5b5c62', LINE = '#9a978f', SOFT = '#eef2f8', MAIN = '#1f4e8c', HEAD = '#e3e9f2', THIN = '#c9c6be';
   const font = (s, w = 400) => ctx.font = `${w} ${s}px ${FONT}`;
   const text = (s, x, y, align = 'left', color = INK) => { ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); };
   const hline = (x1, x2, y, w = 1.5, col = LINE) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); };
   const vline = (x, y1, y2, w = 1.5, col = LINE) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke(); };
   const box = (x, y, w, h, fill, stroke = LINE, lw = 1.5) => { if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.strokeRect(x, y, w, h); } };
+  const para = (s, y, size = 25, lh = 38, color = INK, x = M, w = CW) => {
+    font(size); const ls = wrap(ctx, s, w);
+    ls.forEach((ln, j) => text(ln, x, y + lh / 2 + j * lh, 'left', color));
+    return y + ls.length * lh;
+  };
+  const fitImg = (img, x, yMid, maxW, maxH, align = 'left', alpha = 1) => {   // 그림을 칸에 맞춰 그림
+    const sc = Math.min(maxW / img.width, maxH / img.height), w = img.width * sc, h = img.height * sc;
+    const dx = align === 'center' ? x - w / 2 : x;
+    ctx.globalAlpha = alpha; ctx.drawImage(img, dx, yMid - h / 2, w, h); ctx.globalAlpha = 1;
+  };
+  const vatNote = doc.vat === 'none' ? '' : ' (부가세 포함)';
   ctx.textBaseline = 'middle';
-
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+  // 품목 표 + 합계 줄
+  const itemsTable = y => {
+    const cols = [64, 0, 104, 170, 190]; cols[1] = CW - cols[0] - cols[2] - cols[3] - cols[4];
+    const cx = [M]; cols.forEach((w, i) => cx.push(cx[i] + w));
+    const HH = 54;
+    box(M, y, CW, HH, HEAD, null);
+    font(23, 700);
+    ['번호', '품   명', '수량', '단가', '금액'].forEach((h, i) => text(h, cx[i] + cols[i] / 2, y + HH / 2, 'center'));
+    hline(M, R, y, 2, INK); hline(M, R, y + HH, 1.5, INK);
+    const top = y; y += HH;
+    doc.items.forEach((it, i) => {
+      font(25);
+      const lines = wrap(ctx, it.name, cols[1] - 24);
+      const h = Math.max(58, lines.length * 33 + 24);
+      font(23); text(String(i + 1), cx[0] + cols[0] / 2, y + h / 2, 'center', SUB);
+      font(25); lines.forEach((ln, j) => text(ln, cx[1] + 12, y + h / 2 + (j - (lines.length - 1) / 2) * 33, 'left'));
+      const q = num(it.qty); text(q % 1 ? String(q) : q.toLocaleString('ko-KR'), cx[2] + cols[2] / 2, y + h / 2, 'center');
+      text(won(num(it.price)), cx[4] - 14, y + h / 2, 'right');
+      font(25, 700); text(won(Math.round(q * num(it.price))), cx[5] - 14, y + h / 2, 'right');
+      y += h; hline(M, R, y, 1, THIN);
+    });
+    for (let i = 1; i < cols.length; i++) vline(cx[i], top, y, 1, THIN);
+    const sumRows = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
+    const sumTop = y;
+    sumRows.forEach(r => {
+      const h = 56;
+      box(cx[3], y, cols[3], h, r[2] ? HEAD : SOFT, null);
+      font(23, 700); text(r[0], cx[3] + cols[3] / 2, y + h / 2, 'center', r[2] ? INK : SUB);
+      font(r[2] ? 27 : 25, r[2] ? 800 : 600); text(won(r[1]), cx[5] - 14, y + h / 2, 'right', r[2] ? MAIN : INK);
+      y += h; hline(cx[3], R, y, 1, THIN);
+    });
+    vline(cx[3], sumTop, y, 1, THIN); vline(cx[4], sumTop, y, 1, THIN);
+    hline(cx[3], R, y, 2, INK); hline(M, cx[3], sumTop, 2, INK);
+    return y;
+  };
+  const memoBox = (y, label) => {
+    if (!(doc.memo || '').trim()) return y;
+    font(24); const ml = wrap(ctx, doc.memo.trim(), CW - 40);
+    const h = ml.length * 34 + 64;
+    box(M, y, CW, h, '#fff', LINE);
+    font(22, 700); text(label, M + 20, y + 24, 'left', SUB);
+    font(24); ml.forEach((ln, j) => text(ln, M + 20, y + 58 + j * 34, 'left'));
+    return y + h + 18;
+  };
+  const accText = () => SET.account ? [SET.bank, SET.account].filter(Boolean).join(' ') + (SET.holder ? `  (예금주 ${SET.holder})` : '') : '';
+  const footer = y => {
+    y += 24;
+    font(19); text(`${SET.name || ''}${SET.phone ? '  ·  ' + SET.phone : ''}`, W / 2, y, 'center', '#8a8b90');
+    return y + 44;
+  };
 
   // 제목
   let y = 64;
@@ -656,6 +891,120 @@ function drawDoc(ctx, doc, H) {
   hline(W / 2 - tw / 2, W / 2 + tw / 2, y + 81, 1.2, INK);
   y = 180;
 
+  /* ===== 공사 계약서 ===== */
+  if (doc.type === 'contract') {
+    const ct = Object.assign(newCt(), doc.ct || {}), pp = payPlan(doc);
+    const cust = (doc.customer || '').trim(), biz = SET.name || '';
+    y = para(`도급인(손님) ${cust}${josa(cust, '과', '와')} 수급인(업체) ${biz}${josa(biz, '은', '는')} 아래 공사에 대하여 다음과 같이 계약을 맺습니다.`, y, 26, 40) + 26;
+    const heading = (s, y) => { font(27, 800); text(s, M, y + 18, 'left'); return y + 50; };
+
+    // 제1조 공사 개요
+    y = heading('제1조  공사 개요', y);
+    const LC = 170, period = (ct.start || ct.end) ? `${ct.start ? dateKo(ct.start) : '(협의)'}  ~  ${ct.end ? dateKo(ct.end) : '(협의)'}` : '양측이 협의하여 정함';
+    const title = ct.title.trim() || (doc.items[0].name + (doc.items.length > 1 ? ' 외' : ''));
+    const rows = [['공 사 명', title], ['공사 장소', ct.place.trim() || '-'], ['공사 기간', period], ['계약 금액', null]];
+    font(25);
+    const hs = rows.map(r => { if (!r[1]) return 92; r.lines = wrap(ctx, r[1], CW - LC - 32); return Math.max(58, r.lines.length * 36 + 22); });
+    const kvH = hs.reduce((a, b) => a + b, 0);
+    box(M, y, LC, kvH, SOFT, null);
+    hline(M, R, y, 2, INK);
+    let yy = y;
+    rows.forEach((r, i) => {
+      font(23, 700); text(r[0], M + LC / 2, yy + hs[i] / 2, 'center', SUB);
+      if (r[1]) { font(25, i === 0 ? 700 : 400); r.lines.forEach((ln, j) => text(ln, M + LC + 16, yy + hs[i] / 2 + (j - (r.lines.length - 1) / 2) * 36, 'left')); }
+      else {
+        fitFont(ctx, wonWords(c.total), CW - LC - 32, 26, 700); text(wonWords(c.total), M + LC + 16, yy + 28, 'left');
+        font(28, 800); text('₩' + won(c.total), M + LC + 16, yy + 64, 'left', MAIN);
+        const nw = ctx.measureText('₩' + won(c.total)).width; font(21); text(vatNote, M + LC + 16 + nw + 6, yy + 65, 'left', SUB);
+      }
+      yy += hs[i]; hline(M, R, yy, i === rows.length - 1 ? 2 : 1, i === rows.length - 1 ? INK : THIN);
+    });
+    vline(M + LC, y, yy, 1, THIN);
+    y = yy + 34;
+
+    // 제2조 대금 지급
+    y = heading('제2조  공사 대금 지급', y);
+    const pc = [LC, 260, CW - LC - 260], px = [M, M + LC, M + LC + 260, R];
+    const pays = [[`계약금 (${ct.dep}%)`, pp.dep, '계약할 때']];
+    if (+ct.mid) pays.push([`중도금 (${ct.mid}%)`, pp.mid, '공사 중 양측이 정한 날']);
+    pays.push(['잔  금', pp.bal, BAL_TXT[ct.bal] || BAL_TXT['3']]);
+    box(M, y, CW, 50, HEAD, null); hline(M, R, y, 2, INK); hline(M, R, y + 50, 1.5, INK);
+    font(23, 700); ['구분', '금액', '지급 시기'].forEach((h, i) => text(h, px[i] + pc[i] / 2, y + 25, 'center'));
+    const ptop = y; y += 50;
+    pays.forEach((r, i) => {
+      const h = 56;
+      font(23, 700); text(r[0], px[0] + pc[0] / 2, y + h / 2, 'center', SUB);
+      font(25, 700); text(won(r[1]) + '원', px[2] - 16, y + h / 2, 'right');
+      font(24); text(r[2], px[2] + 18, y + h / 2, 'left');
+      y += h; hline(M, R, y, i === pays.length - 1 ? 2 : 1, i === pays.length - 1 ? INK : THIN);
+    });
+    vline(px[1], ptop, y, 1, THIN); vline(px[2], ptop, y, 1, THIN);
+    if (accText()) y = para(`입금 계좌: ${accText()}`, y + 10, 23, 36, SUB);
+    y += 34;
+
+    // 제3조 공사 내역
+    y = heading('제3조  공사 내역', y);
+    y = itemsTable(y) + 34;
+
+    // 제4조~ 조항
+    const arts = [
+      ['제4조  공사 기간', '수급인은 제1조의 공사 기간 안에 공사를 마칩니다. 날씨·천재지변이나 도급인의 요청처럼 수급인의 책임이 아닌 사유로 늦어질 때는 양측이 협의하여 기간을 늘릴 수 있습니다.'],
+      ['제5조  추가·변경 공사', '이 계약에 없는 공사를 더하거나 바꿀 때는 양측이 금액과 기간을 먼저 협의한 뒤 진행합니다.'],
+      ['제6조  자재', '자재는 공사 내역에 따릅니다. 품절 등으로 바꿔야 할 때는 같은 등급 이상으로 하며, 도급인에게 미리 알립니다.'],
+      ['제7조  하자보수', `공사를 마친 날부터 ${ct.war} 안에 시공 잘못으로 생긴 하자는 수급인이 무상으로 고쳐 드립니다. 도급인의 사용 잘못이나 천재지변으로 생긴 하자는 제외합니다.`],
+      ['제8조  계약 해제', '공사를 시작하기 전에는 도급인은 계약금을 포기하고, 수급인은 계약금의 두 배를 돌려주고 계약을 해제할 수 있습니다. 공사를 시작한 뒤에 해제할 때는 이미 시공한 부분과 들여온 자재의 비용을 정산합니다.'],
+      ['제9조  기타', '이 계약서에 없는 내용은 양측이 협의하여 정하고, 협의가 되지 않으면 민법 등 관계 법령에 따릅니다.'],
+    ];
+    arts.forEach(([h, b]) => { font(25, 800); text(h, M, y + 18, 'left'); y = para(b, y + 42, 24, 36, INK, M + 10, CW - 10) + 20; });
+    y = memoBox(y + 6, '특약사항') + 16;
+
+    // 맺음말·날짜
+    font(25); text('위 계약을 증명하기 위하여 계약서를 작성하고 양측이 서명합니다.', W / 2, y + 18, 'center');
+    y += 58; font(30, 800); text(dateKo(doc.date), W / 2, y + 20, 'center'); y += 72;
+
+    // 서명란 (왼쪽 도급인, 오른쪽 수급인)
+    const BW = (CW - 24) / 2, LW2 = 96, VW2 = BW - LW2 - 24;
+    const col = (x, title, list, img, mark, isStamp) => {
+      font(23);
+      list.forEach(r => { r.lines = wrap(ctx, r[1] || '', VW2); r.h = r[2] ? 112 : Math.max(52, r.lines.length * 32 + 20); });
+      return { x, title, list, img, mark, isStamp, h: 52 + list.reduce((a, r) => a + r.h, 0) };
+    };
+    const sRows = [['상  호', biz], ['대 표 자', SET.owner]];
+    if (SET.biz) sRows.push(['등록번호', SET.biz]);
+    if (SET.addr) sRows.push(['주  소', SET.addr]);
+    if (SET.phone) sRows.push(['연 락 처', SET.phone]);
+    sRows.push(['도  장', '', 1]);
+    const A = col(M, '도급인 (손님)', [['성  명', cust], ['연 락 처', ct.phone], ['서  명', '', 1]], signImg, '(서명)', false);
+    const B = col(M + BW + 24, '수급인 (업체)', sRows, stampImg, '(인)', true);
+    const SH = Math.max(A.h, B.h);
+    [A, B].forEach(S => {
+      S.list[S.list.length - 1].h += SH - S.h;
+      box(S.x, y, BW, 52, HEAD, null); box(S.x, y + 52, LW2, SH - 52, SOFT, null);
+      font(24, 800); text(S.title, S.x + BW / 2, y + 26, 'center');
+      hline(S.x, S.x + BW, y + 52, 1.5, INK);
+      let ry = y + 52;
+      S.list.forEach((r, i) => {
+        if (i) hline(S.x, S.x + BW, ry, 1, THIN);
+        font(21, 700); text(r[0], S.x + LW2 / 2, ry + r.h / 2, 'center', SUB);
+        if (r[2]) {
+          if (S.img) S.isStamp ? fitImg(S.img, S.x + LW2 + (BW - LW2) / 2, ry + r.h / 2, 96, 96, 'center', 0.92)
+                              : fitImg(S.img, S.x + LW2 + (BW - LW2) / 2, ry + r.h / 2, BW - LW2 - 30, Math.min(r.h - 16, 120), 'center');
+          else { font(22); text(S.mark, S.x + BW - 20, ry + r.h / 2, 'right', '#9a9a9a'); }
+        } else {
+          font(23, i === 0 ? 700 : 400);
+          r.lines.forEach((ln, j) => text(ln, S.x + LW2 + 14, ry + r.h / 2 + (j - (r.lines.length - 1) / 2) * 32, 'left'));
+        }
+        ry += r.h;
+      });
+      vline(S.x + LW2, y + 52, y + SH, 1, THIN);
+      box(S.x, y, BW, SH, null, INK, 2);
+    });
+    y += SH + 22;
+    if (!signImg) y = para('※ 직접 서명하지 못한 경우, 이 계약서를 받은 대화방에 「계약 내용에 동의합니다」라고 답장해 주세요.', y, 22, 34, SUB);
+    return footer(y);
+  }
+
+  /* ===== 견적서 · 거래명세서 ===== */
   // 왼쪽: 날짜·받는 분
   const LW = 420;
   let ly = y + 10;
@@ -686,8 +1035,7 @@ function drawDoc(ctx, doc, H) {
   box(TX, y, VC, tH, SOFT); box(TX + VC, y, LC, tH, SOFT); box(TX, y, TW, tH, null, INK, 2);
   vline(TX + VC, y, y + tH); vline(VX, y, y + tH);
   font(24, 700);
-  const sup = ['공', '급', '자'];
-  sup.forEach((ch, i) => text(ch, TX + VC / 2, y + tH / 2 + (i - 1) * Math.min(40, tH / 3.4), 'center'));
+  ['공', '급', '자'].forEach((ch, i) => text(ch, TX + VC / 2, y + tH / 2 + (i - 1) * Math.min(40, tH / 3.4), 'center'));
   let ry = y, stampRow = null;
   rows.forEach((r, i) => {
     if (i) hline(TX + VC, R, ry);
@@ -699,9 +1047,8 @@ function drawDoc(ctx, doc, H) {
   });
   if (stampImg && stampRow) {
     const sz = 88, ar = stampImg.width / stampImg.height;
-    const w = ar >= 1 ? sz : sz * ar, h = ar >= 1 ? sz / ar : sz;
-    const sx = Math.min(R - w - 10, VX + 14 + stampRow.w + 8);
-    ctx.globalAlpha = 0.92; ctx.drawImage(stampImg, sx, stampRow.y + stampRow.h / 2 - h / 2, w, h); ctx.globalAlpha = 1;
+    const w = ar >= 1 ? sz : sz * ar;
+    fitImg(stampImg, Math.min(R - w - 10, VX + 14 + stampRow.w + 8), stampRow.y + stampRow.h / 2, sz, sz, 'left', 0.92);
   }
   y = Math.max(ly, y + tH) + 34;
 
@@ -715,63 +1062,16 @@ function drawDoc(ctx, doc, H) {
   fitFont(ctx, nums, CW - BL - 40, 38, 800); text(nums, M + BL + 22, y + 82, 'left', MAIN);
   y += BH + 26;
 
-  // 품목 표
-  const cols = [64, 0, 104, 170, 190]; cols[1] = CW - cols[0] - cols[2] - cols[3] - cols[4];
-  const cx = [M]; cols.forEach((w, i) => cx.push(cx[i] + w));
-  const HH = 54;
-  box(M, y, CW, HH, '#e3e9f2', null);
-  font(23, 700);
-  ['번호', '품   명', '수량', '단가', '금액'].forEach((h, i) => text(h, cx[i] + cols[i] / 2, y + HH / 2, 'center'));
-  hline(M, R, y, 2, INK); hline(M, R, y + HH, 1.5, INK);
-  const tableTop = y; y += HH;
-  font(25);
-  doc.items.forEach((it, i) => {
-    const lines = wrap(ctx, it.name, cols[1] - 24);
-    const h = Math.max(58, lines.length * 33 + 24);
-    font(23); text(String(i + 1), cx[0] + cols[0] / 2, y + h / 2, 'center', SUB);
-    font(25); lines.forEach((ln, j) => text(ln, cx[1] + 12, y + h / 2 + (j - (lines.length - 1) / 2) * 33, 'left'));
-    const q = num(it.qty); text(q % 1 ? String(q) : q.toLocaleString('ko-KR'), cx[2] + cols[2] / 2, y + h / 2, 'center');
-    text(won(num(it.price)), cx[4] - 14, y + h / 2, 'right');
-    font(25, 700); text(won(Math.round(q * num(it.price))), cx[5] - 14, y + h / 2, 'right');
-    y += h; hline(M, R, y, 1, '#c9c6be');
-  });
-  for (let i = 1; i < cols.length; i++) vline(cx[i], tableTop, y, 1, '#c9c6be');
-  // 합계 줄
-  const sumRows = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
-  const sumTop = y;
-  sumRows.forEach(r => {
-    const h = 56;
-    box(cx[3], y, cols[3], h, r[2] ? '#e3e9f2' : SOFT, null);
-    font(23, 700); text(r[0], cx[3] + cols[3] / 2, y + h / 2, 'center', r[2] ? INK : SUB);
-    font(r[2] ? 27 : 25, r[2] ? 800 : 600); text(won(r[1]), cx[5] - 14, y + h / 2, 'right', r[2] ? MAIN : INK);
-    y += h; hline(cx[3], R, y, 1, '#c9c6be');
-  });
-  vline(cx[3], sumTop, y, 1, '#c9c6be'); vline(cx[4], sumTop, y, 1, '#c9c6be');
-  hline(cx[3], R, y, 2, INK);
-  hline(M, cx[3], sumTop, 2, INK);
-  y += 30;
-
-  // 안내 문구
-  if ((doc.memo || '').trim()) {
-    font(24); const ml = wrap(ctx, doc.memo.trim(), CW - 40);
-    const h = ml.length * 34 + 64;
-    box(M, y, CW, h, '#fff', LINE);
-    font(22, 700); text('안내', M + 20, y + 24, 'left', SUB);
-    font(24); ml.forEach((ln, j) => text(ln, M + 20, y + 58 + j * 34, 'left'));
-    y += h + 18;
-  }
-  // 입금 계좌
-  if (SET.account) {
-    const acc = [SET.bank, SET.account].filter(Boolean).join(' ') + (SET.holder ? `  (예금주 ${SET.holder})` : '');
+  y = itemsTable(y) + 30;
+  y = memoBox(y, '안내');
+  if (accText()) {
     const h = 70;
     box(M, y, CW, h, SOFT, LINE);
     font(22, 700); text('입금 계좌', M + 20, y + h / 2, 'left', SUB);
-    fitFont(ctx, acc, CW - 170, 26, 700); text(acc, M + 150, y + h / 2, 'left');
+    fitFont(ctx, accText(), CW - 170, 26, 700); text(accText(), M + 150, y + h / 2, 'left');
     y += h + 18;
   }
-  y += 24;
-  font(19); text(`${SET.name || ''}${SET.phone ? '  ·  ' + SET.phone : ''}`, W / 2, y, 'center', '#8a8b90');
-  return y + 44;
+  return footer(y);
 }
 
 function makeImage(doc) {
@@ -786,11 +1086,12 @@ function makeImage(doc) {
 }
 
 /* ---------- 설정 ---------- */
-const SF = { sName: 'name', sOwner: 'owner', sBiz: 'biz', sPhone: 'phone', sAddr: 'addr', sKind: 'kind', sItem: 'item', sBank: 'bank', sAccount: 'account', sHolder: 'holder', sVat: 'vat', sMemoQ: 'memoQ', sMemoS: 'memoS' };
+const SF = { sName: 'name', sOwner: 'owner', sBiz: 'biz', sPhone: 'phone', sAddr: 'addr', sKind: 'kind', sItem: 'item', sBank: 'bank', sAccount: 'account', sHolder: 'holder', sVat: 'vat', sMemoQ: 'memoQ', sMemoS: 'memoS', sMemoC: 'memoC' };
 let tmpStamp = '';
 function enterSettings() {
   Object.entries(SF).forEach(([id, k]) => { $('#' + id).value = SET[k] || ''; $('#' + id).classList.remove('err'); });
   tmpStamp = SET.stamp; showStamp();
+  $('#memoCWrap').hidden = !HAS_CONTRACT;
 }
 function showStamp() {
   $('#stampPrev').innerHTML = tmpStamp ? `<img src="${tmpStamp}" alt="도장">` : '도장 없음';
