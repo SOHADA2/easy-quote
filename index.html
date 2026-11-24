@@ -87,6 +87,14 @@ textarea.t{min-height:96px;resize:vertical}
 .tag{font-size:.78rem;font-weight:700;border-radius:5px;padding:2px 7px;background:var(--main-soft);color:var(--main)}
 .tag.stmt{background:#e9f4ec;color:var(--ok)}
 .tag.contract{background:#f6ecdf;color:#8a4b08}
+.tag.receipt{background:#e9f4ec;color:var(--ok)}
+.tag.report{background:#efe9f7;color:#5b3c88}
+.seg.four{grid-template-columns:1fr 1fr}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.photos:empty{display:none}
+.photos div{position:relative}
+.photos img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.photos button{position:absolute;top:6px;right:6px;min-height:36px;padding:0 10px;border-radius:6px;border:0;background:rgba(0,0,0,.65);color:#fff;font-weight:700;font-size:.85rem}
 .seg.three{grid-template-columns:1fr 1fr 1fr}
 .seg.three button{font-size:.95rem;padding:0 4px}
 .sign-prev{height:110px;border:2px dashed #bdb8ad;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);margin-bottom:10px}
@@ -180,9 +188,7 @@ textarea.t{min-height:96px;resize:vertical}
       <button class="btn" data-go="settings">내 사업장 정보 적기</button>
     </div>
 
-    <button class="big" data-new="quote"><b>견적서 쓰기</b><span>일을 하기 전에 금액을 알려 드릴 때</span></button>
-    <button class="big" data-new="stmt"><b>거래명세서 쓰기</b><span>물건을 보내거나 일을 마친 뒤</span></button>
-    <button class="big" data-new="contract" id="newContract" hidden><b>공사 계약서 쓰기</b><span>공사를 맡기로 정했을 때</span></button>
+    <div id="newBtns"></div>
 
     <div class="sec-title">작성한 기록</div>
     <ul class="hist" id="histList"></ul>
@@ -193,16 +199,14 @@ textarea.t{min-height:96px;resize:vertical}
   <section class="view" id="v-write">
     <div class="card">
       <label class="f">무엇을 보냅니까?</label>
-      <div class="seg" id="typeSeg">
-        <button data-type="quote">견적서</button>
-        <button data-type="stmt">거래명세서</button>
-        <button data-type="contract" hidden>계약서</button>
-      </div>
+      <div class="seg" id="typeSeg"></div>
 
-      <label class="f">받는 분은</label>
-      <div class="seg" id="ckSeg">
-        <button data-ck="p">개인</button>
-        <button data-ck="b">사업자</button>
+      <div id="ckWrap">
+        <label class="f">받는 분은</label>
+        <div class="seg" id="ckSeg">
+          <button data-ck="p">개인</button>
+          <button data-ck="b">사업자</button>
+        </div>
       </div>
 
       <label class="f" for="wCustomer" id="lblCust">손님 이름</label>
@@ -249,14 +253,46 @@ textarea.t{min-height:96px;resize:vertical}
       <select class="t" id="cWar"><option>3개월</option><option>6개월</option><option>1년</option></select>
     </div>
 
-    <div class="card">
+    <div class="card" id="rcCard" hidden>
+      <label class="f" for="rcMethod">받은 방법</label>
+      <select class="t" id="rcMethod"><option>계좌이체</option><option>현금</option><option>카드</option><option>기타</option></select>
+    </div>
+
+    <div class="card" id="rpCard" hidden>
+      <h2>검사 내용</h2>
+      <label class="f" for="rpItem">검사 항목</label>
+      <input class="t" id="rpItem" placeholder="예) 세대 내 누수 탐지">
+      <label class="f" for="rpPlace">검사 장소 <small>(주소)</small></label>
+      <input class="t" id="rpPlace" placeholder="예) 마포구 ○○아파트 101동 302호">
+      <label class="f" for="rpPhone">신청인 연락처</label>
+      <input class="t" id="rpPhone" inputmode="tel" placeholder="010-0000-0000">
+      <label class="f" for="rpLoc">누수 발생 위치 <small>(정확히 적어 주세요)</small></label>
+      <textarea class="t" id="rpLoc" placeholder="예) 안방 바닥 난방 배관 (보일러실에서 약 1.5m 지점)"></textarea>
+      <label class="f" for="rpCause">누수 발생 원인</label>
+      <textarea class="t" id="rpCause" placeholder="예) 난방 배관 연결부 부식으로 인한 누수"></textarea>
+      <label class="f" for="rpDate">누수 탐지 일자</label>
+      <input class="t" id="rpDate" type="date">
+      <label class="f" for="rpFix">수리 일자 <small>(수리했으면)</small></label>
+      <input class="t" id="rpFix" type="date">
+      <label class="f" for="rpNote">소견 및 조치 내용</label>
+      <textarea class="t" id="rpNote" placeholder="예) 해당 배관 교체 후 압력 시험으로 누수 없음을 확인함"></textarea>
+      <label class="f" for="rpStaff">담당자</label>
+      <input class="t" id="rpStaff" placeholder="예) 홍길동">
+      <label class="f">현장 사진 <small>(최대 4장 · 선택)</small></label>
+      <div class="photos" id="rpPhotos"></div>
+      <button class="btn line" id="rpAdd">사진 넣기</button>
+      <input type="file" id="rpFile" accept="image/*" multiple hidden>
+      <p class="hint">사진은 휴대폰 저장 공간 때문에 「작성한 기록」에는 남지 않습니다. 기록에서 다시 열면 사진을 다시 넣어 주세요.</p>
+    </div>
+
+    <div class="card" id="itemsCard">
       <h2>품목</h2>
       <div id="items"></div>
       <datalist id="itemList"></datalist>
       <button class="add" id="addItem">+ 품목 하나 더 넣기</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="vatCard">
       <h2>부가세</h2>
       <div class="radio" id="vatRadio">
         <label><input type="radio" name="vat" value="add"><span>부가세 별도<small>적은 금액에 10%를 더합니다</small></span></label>
@@ -266,7 +302,7 @@ textarea.t{min-height:96px;resize:vertical}
       <div class="sum" id="sumBox"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="memoCard">
       <label class="f" for="wMemo" id="lblMemo">안내 문구 <small>(없으면 비워 두세요)</small></label>
       <textarea class="t" id="wMemo" placeholder="예) 견적 유효기간: 발행일로부터 30일"></textarea>
     </div>
@@ -345,8 +381,14 @@ textarea.t{min-height:96px;resize:vertical}
       </select>
       <label class="f" for="sMemoQ">견적서 안내 문구</label>
       <textarea class="t" id="sMemoQ"></textarea>
-      <label class="f" for="sMemoS">거래명세서 안내 문구</label>
-      <textarea class="t" id="sMemoS" placeholder="예) 입금 확인 후 세금계산서를 발행합니다."></textarea>
+      <div id="memoSWrap">
+        <label class="f" for="sMemoS">거래명세서 안내 문구</label>
+        <textarea class="t" id="sMemoS" placeholder="예) 입금 확인 후 세금계산서를 발행합니다."></textarea>
+      </div>
+      <div id="memoRWrap">
+        <label class="f" for="sMemoR">영수증 비고</label>
+        <textarea class="t" id="sMemoR" placeholder="예) 보일러 교체 공사 잔금"></textarea>
+      </div>
       <div id="memoCWrap" hidden>
         <label class="f" for="sMemoC">계약서 특약사항</label>
         <textarea class="t" id="sMemoC" placeholder="예) 폐기물 처리비 포함"></textarea>
@@ -395,14 +437,16 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const FONT = '-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif';
 
 const TYPES = {
-  quote: { name: '견적서', title: '견   적   서', lead: '아래와 같이 견적합니다.' },
-  stmt:  { name: '거래명세서', title: '거 래 명 세 서', lead: '아래와 같이 거래합니다.' },
-  contract: { name: '공사 계약서', title: '공 사 도 급 계 약 서', lead: '' },
+  quote: { name: '견적서', short: '견적서', title: '견   적   서', lead: '아래와 같이 견적합니다.', desc: '일을 하기 전에 금액을 알려 드릴 때' },
+  stmt:  { name: '거래명세서', short: '거래명세서', title: '거 래 명 세 서', lead: '아래와 같이 거래합니다.', desc: '물건을 보내거나 일을 마친 뒤' },
+  receipt: { name: '영수증', short: '영수증', title: '영   수   증', lead: '아래 금액을 정히 영수합니다.', desc: '돈을 받은 뒤 받았다는 증빙으로' },
+  contract: { name: '공사 계약서', short: '계약서', title: '공 사 도 급 계 약 서', lead: '', desc: '공사를 맡기로 정했을 때' },
+  report: { name: '기술소견서', short: '기술소견서', title: '기 술 소 견 서', lead: '', desc: '누수 탐지·수리 결과를 증빙할 때 (보험 청구 등)' },
 };
 const DEFAULT_SET = {
   name: '', owner: '', biz: '', phone: '', addr: '', kind: '', item: '',
   bank: '', account: '', holder: '', stamp: '',
-  vat: 'add', memoQ: '견적 유효기간: 발행일로부터 30일', memoS: '', memoC: '',
+  vat: 'add', memoQ: '견적 유효기간: 발행일로부터 30일', memoS: '', memoC: '', memoR: '',
 };
 
 /* ---------- 저장소 ---------- */
@@ -410,7 +454,9 @@ const DEFAULT_SET = {
 const PRESET = window.EQ_PRESET || {};
 const KEY = 'eq_' + (PRESET.id ? PRESET.id + '_' : '');
 const APP_NAME = PRESET.appName || '간편 견적서';
-const HAS_CONTRACT = !!PRESET.contract;
+// 쓸 수 있는 문서 종류 (업체 전용판은 shops json의 types로 정함)
+const DOC_TYPES = (PRESET.types || ['quote', 'stmt', 'receipt', ...(PRESET.contract ? ['contract'] : [])]).filter(t => TYPES[t]);
+const HAS_CONTRACT = DOC_TYPES.includes('contract');
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) {
@@ -426,7 +472,7 @@ let SET = Object.assign({}, DEFAULT_SET, PRESET.settings || {}, SAVED);
 let DOCS = LS.get('docs', []);
 let cur = LS.get('cur', null);
 if (cur && OLD.memoQ && OLD.memoQ.includes(cur.memo)) cur.memo = SET.memoQ;
-let stampImg = null, signImg = null;
+let stampImg = null, signImg = null, rpImgs = [];
 let shareFile = null, shareURL = null;
 
 /* ---------- 도우미 ---------- */
@@ -485,7 +531,8 @@ function wonWords(n) {
   return '일금 ' + s + '원정';
 }
 
-const memoFor = type => ({ quote: SET.memoQ, stmt: SET.memoS, contract: SET.memoC })[type] || '';
+const memoFor = type => ({ quote: SET.memoQ, stmt: SET.memoS, receipt: SET.memoR, contract: SET.memoC })[type] || '';
+const newRp = () => ({ item: '누수 탐지', place: '', phone: '', loc: '', cause: '', date: today(), fix: '', note: '', staff: SET.owner || '', photos: [] });
 function josa(w, withF, noF) {      // 받침 있으면 withF(과/은), 없으면 noF(와/는)
   const code = String(w || '').trim().slice(-1).charCodeAt(0) - 0xAC00;
   if (!(code >= 0 && code <= 11171)) return withF + '(' + noF + ')';
@@ -541,14 +588,14 @@ document.addEventListener('click', e => {
 /* ---------- 홈 ---------- */
 function enterHome() {
   $('#firstNotice').hidden = !!SET.name;
-  $('#newContract').hidden = !HAS_CONTRACT;
+  $('#newBtns').innerHTML = DOC_TYPES.map(t => `<button class="big" data-new="${t}"><b>${TYPES[t].name} 쓰기</b><span>${TYPES[t].desc}</span></button>`).join('');
   const ul = $('#histList');
   if (!DOCS.length) { ul.innerHTML = '<li class="empty" style="display:block">아직 작성한 기록이 없습니다.</li>'; return; }
   ul.innerHTML = DOCS.map(d => `
     <li>
       <button class="open" data-id="${d.id}">
         <div class="r1"><span class="tag ${d.type}">${TYPES[d.type].name}</span><span class="who">${esc(d.customer || '(받는 분 없음)')}</span></div>
-        <div class="r2">${dateKo(d.date)} · ${won(calc(d).total)}원</div>
+        <div class="r2">${dateKo(d.date)} · ${d.type === 'report' ? esc((d.rp && d.rp.item) || '검사') : won(calc(d).total) + '원'}</div>
       </button>
       <button class="del" data-del="${d.id}">지우기</button>
     </li>`).join('');
@@ -573,6 +620,8 @@ function newDoc(type) {
     vat: SET.vat, memo: memoFor(type),
   };
   if (type === 'contract') cur.ct = newCt();
+  if (type === 'report') cur.rp = newRp();
+  if (type === 'receipt') cur.method = '계좌이체';
   LS.set('cur', cur); go('write');
 }
 
@@ -584,6 +633,9 @@ function priceBook() {          // 예전에 쓴 품목 → 단가
   return m;
 }
 function enterWrite() {
+  const segTypes = DOC_TYPES.includes(cur.type) ? DOC_TYPES : [...DOC_TYPES, cur.type];   // 예전 종류(거래명세서 등) 기록도 열 수 있게
+  $('#typeSeg').innerHTML = segTypes.map(t => `<button data-type="${t}">${TYPES[t].short}</button>`).join('');
+  $('#typeSeg').className = 'seg' + (segTypes.length === 3 ? ' three' : segTypes.length >= 4 ? ' four' : '');
   $$('#typeSeg button').forEach(b => b.classList.toggle('on', b.dataset.type === cur.type));
   $('#wCustomer').value = cur.customer; $('#wCustomer').classList.remove('err');
   $('#wDate').value = cur.date;
@@ -596,6 +648,46 @@ function enterWrite() {
   renderItems(); renderSum();
 }
 function saveCur() { LS.set('cur', cur); }
+
+/* 기술소견서 입력 */
+const RF = { rpItem: 'item', rpPlace: 'place', rpPhone: 'phone', rpLoc: 'loc', rpCause: 'cause', rpDate: 'date', rpFix: 'fix', rpNote: 'note', rpStaff: 'staff' };
+Object.entries(RF).forEach(([id, k]) => $('#' + id).addEventListener('input', e => {
+  if (k === 'phone') e.target.value = fmtPhone(e.target.value);
+  cur.rp = cur.rp || newRp(); cur.rp[k] = e.target.value; saveCur();
+}));
+function renderPhotos() {
+  const ph = (cur.rp && cur.rp.photos) || [];
+  $('#rpPhotos').innerHTML = ph.map((src, i) => `<div><img src="${src}" alt="현장 사진 ${i + 1}"><button data-pdel="${i}">빼기</button></div>`).join('');
+  $('#rpAdd').hidden = ph.length >= 4;
+}
+$('#rpPhotos').addEventListener('click', e => {
+  const b = e.target.closest('[data-pdel]'); if (!b) return;
+  cur.rp.photos.splice(+b.dataset.pdel, 1); renderPhotos(); saveCur();
+});
+$('#rpAdd').onclick = () => $('#rpFile').click();
+function shrinkPhoto(file) {          // 긴 쪽 1000px JPEG로 줄여서 저장 (휴대폰 저장 공간 아끼기)
+  return new Promise(res => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1000 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.72));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    im.src = url;
+  });
+}
+$('#rpFile').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  cur.rp = cur.rp || newRp(); cur.rp.photos = cur.rp.photos || [];
+  for (const f of files) {
+    if (cur.rp.photos.length >= 4) { toast('사진은 4장까지 넣을 수 있습니다.'); break; }
+    const d = await shrinkPhoto(f); if (d) cur.rp.photos.push(d);
+  }
+  renderPhotos(); saveCur();
+});
+$('#rcMethod').addEventListener('change', e => { cur.method = e.target.value; saveCur(); });
 
 /* 받는 분: 개인(ck 'p') / 사업자(ck 'b', cb = 등록번호·대표자·주소) */
 function applyCustUI() {
@@ -632,14 +724,22 @@ $('#wCustomer').addEventListener('change', e => {
 
 const CF = { cTitle: 'title', cPlace: 'place', cPhone: 'phone', cStart: 'start', cEnd: 'end', cDep: 'dep', cMid: 'mid', cBal: 'bal', cWar: 'war' };
 function applyTypeUI() {
-  const isC = cur.type === 'contract';
-  $('#typeSeg').classList.toggle('three', HAS_CONTRACT);
-  $('#typeSeg [data-type="contract"]').hidden = !HAS_CONTRACT;
+  const isC = cur.type === 'contract', isR = cur.type === 'report', isRc = cur.type === 'receipt';
   $('#ctCard').hidden = !isC; $('#signCard').hidden = !isC;
+  $('#rpCard').hidden = !isR; $('#rcCard').hidden = !isRc;
+  $('#itemsCard').hidden = isR; $('#vatCard').hidden = isR; $('#memoCard').hidden = isR; $('#ckWrap').hidden = isR;
   applyCustUI();
-  $('#lblDate').textContent = isC ? '계약하는 날' : '날짜';
-  $('#lblMemo').innerHTML = isC ? '특약사항 <small>(따로 약속한 내용 · 없으면 비워 두세요)</small>' : '안내 문구 <small>(없으면 비워 두세요)</small>';
-  $('#wMemo').placeholder = isC ? '예) 기존 타일 철거·폐기물 처리 포함' : '예) 견적 유효기간: 발행일로부터 30일';
+  if (isR) {
+    $('#bizBox').hidden = true;
+    $('#lblCust').innerHTML = '신청인 이름 <small>(검사를 맡긴 분)</small>'; $('#wCustomer').placeholder = '예) 김철수';
+    if (!cur.rp) cur.rp = newRp();
+    Object.entries(RF).forEach(([id, k]) => $('#' + id).value = cur.rp[k] ?? '');
+    renderPhotos();
+  }
+  if (isRc) $('#rcMethod').value = cur.method || '계좌이체';
+  $('#lblDate').textContent = isC ? '계약하는 날' : isR ? '작성일' : isRc ? '받은 날' : '날짜';
+  $('#lblMemo').innerHTML = isC ? '특약사항 <small>(따로 약속한 내용 · 없으면 비워 두세요)</small>' : isRc ? '비고 <small>(무엇의 대금인지 등 · 없으면 비워 두세요)</small>' : '안내 문구 <small>(없으면 비워 두세요)</small>';
+  $('#wMemo').placeholder = isC ? '예) 기존 타일 철거·폐기물 처리 포함' : isRc ? '예) 보일러 교체 공사 잔금' : '예) 견적 유효기간: 발행일로부터 30일';
   if (isC) {
     if (!cur.ct) cur.ct = newCt();
     Object.entries(CF).forEach(([id, k]) => $('#' + id).value = cur.ct[k] ?? '');
@@ -778,6 +878,7 @@ $('#typeSeg').addEventListener('click', e => {
   // 안내 문구가 기본값 그대로면 종류에 맞게 바꿔 줌
   if ((cur.memo || '') === memoFor(old)) { cur.memo = memoFor(cur.type); $('#wMemo').value = cur.memo; }
   if (cur.type === 'contract' && !cur.ct) cur.ct = newCt();
+  if (cur.type === 'report' && !cur.rp) cur.rp = newRp();
   $$('#typeSeg button').forEach(x => x.classList.toggle('on', x === b));
   $('#topTitle').textContent = TYPES[cur.type].name + ' 쓰기';
   applyTypeUI(); saveCur();
@@ -792,8 +893,8 @@ $('#vatRadio').addEventListener('change', e => {
 $('#toPreview').onclick = () => {
   const c = $('#wCustomer');
   if (!cur.customer.trim()) { c.classList.add('err'); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('받는 분을 적어 주세요.'); return; }
-  cur.items = cur.items.filter((it, i) => it.name.trim() || num(it.price) || i === 0);
-  const firstBad = cur.items.findIndex(it => !it.name.trim());
+  if (cur.type !== 'report') cur.items = cur.items.filter((it, i) => it.name.trim() || num(it.price) || i === 0);
+  const firstBad = cur.type === 'report' ? -1 : cur.items.findIndex(it => !it.name.trim());
   if (firstBad >= 0) {
     renderItems(); renderSum();
     const el = $(`.item[data-i="${firstBad}"] [data-f="name"]`); el.classList.add('err');
@@ -805,7 +906,9 @@ $('#toPreview').onclick = () => {
   }
   // 기록에 저장 (같은 문서면 덮어쓰기)
   cur.savedAt = Date.now();
-  DOCS = [JSON.parse(JSON.stringify(cur)), ...DOCS.filter(d => d.id !== cur.id)].slice(0, 300);
+  const keep = JSON.parse(JSON.stringify(cur));
+  if (keep.rp) keep.rp.photos = [];             // 사진은 기록에 남기지 않음(저장 공간)
+  DOCS = [keep, ...DOCS.filter(d => d.id !== cur.id)].slice(0, 300);
   LS.set('docs', DOCS); saveCur();
   go('preview');
 };
@@ -821,6 +924,7 @@ async function enterPreview() {
   try {
     await loadStamp();
     signImg = await loadImg(cur.type === 'contract' && cur.ct ? cur.ct.sign : '');
+    rpImgs = cur.type === 'report' && cur.rp ? (await Promise.all((cur.rp.photos || []).map(loadImg))).filter(Boolean) : [];
     if (gen !== previewGen) return;
     const blob = await makeImage(cur);
     if (gen !== previewGen) return;
@@ -848,6 +952,7 @@ const CAN_JUMP = IN_KAKAO || !IS_IOS;      // 아이폰의 다른 앱 안 브라
 function packDoc(d) {                      // 쓰던 문서를 주소에 담아 인터넷 앱으로 그대로 가져감
   const c = JSON.parse(JSON.stringify(d));
   if (c.ct && (c.ct.sign || '').length > 6000) { c.ct.sign = ''; c.ct.signKey = ''; c.ct.signAt = ''; }
+  if (c.rp) c.rp.photos = [];
   return btoa(unescape(encodeURIComponent(JSON.stringify(c))));
 }
 function openOutside() {
@@ -1015,6 +1120,77 @@ function drawDoc(ctx, doc, H) {
   hline(W / 2 - tw / 2, W / 2 + tw / 2, y + 74, 2.5, INK);
   hline(W / 2 - tw / 2, W / 2 + tw / 2, y + 81, 1.2, INK);
   y = 180;
+
+  /* ===== 기술소견서 (예시 양식: 검사 내역 · 신청인 · 검사 업체 + 현장 사진 · 작성일 · 작성자 직인) ===== */
+  function drawReport(y) {
+    const rp = Object.assign(newRp(), doc.rp || {});
+    const sec = (s, y) => { font(27, 800); text(s, M, y + 18, 'left'); return y + 50; };
+    // 이름칸 + 내용칸 표. 한 줄에 칸 1~2쌍
+    const kv = (y, rows, LCW = 200) => {
+      hline(M, R, y, 2.5, INK);
+      rows.forEach((row, ri) => {
+        const pw = CW / row.length;
+        font(24);
+        const cells = row.map(([l, v, b]) => { font(24, b ? 700 : 400); return { l, b, v: wrap(ctx, String(v || '').trim(), pw - LCW - 28) }; });
+        const h = Math.max(60, ...cells.map(c => c.v.length * 35 + 24));
+        cells.forEach((c, i) => {
+          const x = M + i * pw;
+          box(x, y, LCW, h, SOFT, null);
+          if (i) vline(x, y, y + h, 1.5, LINE);
+          vline(x + LCW, y, y + h, 1, THIN);
+          font(22, 700); const ll = c.l.split('\n');
+          ll.forEach((t2, j) => text(t2, x + LCW / 2, y + h / 2 + (j - (ll.length - 1) / 2) * 28, 'center', SUB));
+          font(24, c.b ? 700 : 400); c.v.forEach((ln, j) => text(ln, x + LCW + 16, y + h / 2 + (j - (c.v.length - 1) / 2) * 35, 'left'));
+        });
+        y += h;
+        hline(M, R, y, ri === rows.length - 1 ? 2.5 : 1, ri === rows.length - 1 ? INK : THIN);
+      });
+      return y;
+    };
+    y = sec('1. 검사 내역', y);
+    y = kv(y, [
+      [['검사 항목', rp.item, 1]],
+      [['검사 장소', rp.place]],
+      [['누수 발생 위치', rp.loc]],
+      [['누수 발생 원인', rp.cause]],
+      [['누수 탐지 일자', rp.date ? dateKo(rp.date) : ''], ['수리 일자', rp.fix ? dateKo(rp.fix) : '']],
+      [['소견 및\n조치 내용', rp.note]],
+    ]) + 36;
+    y = sec('2. 신청인', y);
+    y = kv(y, [[['성  명', (doc.customer || '').trim(), 1], ['연 락 처', rp.phone]]]) + 36;
+    y = sec('3. 검사 업체', y);
+    y = kv(y, [
+      [['상  호', SET.name, 1], ['연 락 처', SET.phone]],
+      [['주  소', SET.addr]],
+      [['사업자번호', SET.biz], ['담 당 자', rp.staff || SET.owner]],
+    ]) + 36;
+    if (rpImgs.length) {                       // 현장 사진 2열
+      y = sec('4. 현장 사진', y);
+      const G = 20, cw2 = (CW - G) / 2, ch2 = Math.round(cw2 * 0.75);
+      rpImgs.forEach((im, i) => {
+        const x = M + (i % 2) * (cw2 + G), yy = y + Math.floor(i / 2) * (ch2 + 52);
+        box(x, yy, cw2, ch2, '#f4f3ef', LINE);
+        ctx.save(); ctx.beginPath(); ctx.rect(x, yy, cw2, ch2); ctx.clip();
+        fitImg(im, x + cw2 / 2, yy + ch2 / 2, cw2, ch2, 'center');
+        ctx.restore(); box(x, yy, cw2, ch2, null, LINE);
+        font(20); text(`사진 ${i + 1}`, x + cw2 / 2, yy + ch2 + 24, 'center', SUB);
+      });
+      y += Math.ceil(rpImgs.length / 2) * (ch2 + 52) + 20;
+    }
+    // 맺음말 · 작성일 · 작성자(직인)
+    font(25); text('위와 같이 검사하였음을 확인합니다.', W / 2, y + 20, 'center'); y += 76;
+    const LX = W / 2 + 40;
+    font(25, 700); text('작 성 일 :', LX, y + 18, 'left', SUB);
+    font(26); text(dateKo(doc.date), R, y + 18, 'right'); y += 60;
+    font(25, 700); text('작 성 자 :', LX, y + 18, 'left', SUB);
+    const signer = [SET.name, SET.owner ? '대표 ' + SET.owner : ''].filter(Boolean).join('  ');
+    const mx = R - 46;                         // (인) 자리 = 직인 가운데
+    font(22); text('(인)', mx, y + 18, 'center', '#9a9a9a');
+    fitFont(ctx, signer, mx - 70 - (LX + 150), 26, 700); text(signer, mx - 64, y + 18, 'right');
+    if (stampImg) fitImg(stampImg, mx, y + 18, 88, 88, 'center', 0.9);
+    y += 70;
+    return footer(y);
+  }
 
   /* ===== 공사 계약서 ===== */
   if (doc.type === 'contract') {
@@ -1207,8 +1383,11 @@ function drawDoc(ctx, doc, H) {
     return footer(y);
   }
 
-  /* ===== 견적서 · 거래명세서 ===== */
-  const isQ = doc.type === 'quote';
+  /* ===== 기술소견서 ===== */
+  if (doc.type === 'report') return drawReport(y);
+
+  /* ===== 견적서 · 거래명세서 · 영수증 ===== */
+  const isQ = doc.type === 'quote', isRc = doc.type === 'receipt';
   // 위: 받는 분 표(왼쪽) + 공급자 표(오른쪽) — 두 표 높이를 맞춤
   const LW = Math.round(CW * 0.42), GAP = 24, LBW = 112;
   const TX = M + LW + GAP, TW = R - TX, VC = 46, LC = 112, VX = TX + VC + LC, VW = R - VX;
@@ -1230,9 +1409,10 @@ function drawDoc(ctx, doc, H) {
   if (cl.length > 2) { cs = 28; font(cs, 800); cl = wrap(ctx, cust, custW + 10); }
   if (cl.length > 3) { cs = 25; font(cs, 800); cl = wrap(ctx, cust, custW + 16); }
   const dH = 62, leadH = 64;
-  const lrows = [{ l: isQ ? '견적일자' : '거래일자', v: [dateKo(doc.date)], h: dH, date: 1 }];
-  const custRow = { l: isB ? '상  호' : (isQ ? '수  신' : '받 는 분'), cust: 1, h: cl.length * (cs + 10) + (isB ? 26 : 44) };
+  const lrows = [{ l: isQ ? '견적일자' : isRc ? '영수일자' : '거래일자', v: [dateKo(doc.date)], h: dH, date: 1 }];
+  const custRow = { l: isB ? '상  호' : (isQ ? '수  신' : isRc ? '성  명' : '받 는 분'), cust: 1, h: cl.length * (cs + 10) + (isB ? 26 : 44) };
   lrows.push(custRow);
+  if (isRc) lrows.push({ l: '결제 방법', v: [doc.method || '계좌이체'], h: 54 });
   if (isB) {
     font(24);
     [['등록번호', cb.biz], ['대 표 자', cb.owner], ['주  소', cb.addr]].forEach(([l, v]) => {
@@ -1300,7 +1480,7 @@ function drawDoc(ctx, doc, H) {
   // 합계금액 띠: 한글 금액(왼쪽) + 숫자 금액(오른쪽)
   const BH = 96, BL = 200;
   box(M, y, CW, BH, SOFT, INK, 2); vline(M + BL, y, y + BH, 1.5, INK);
-  font(27, 800); text('합계금액', M + BL / 2, y + BH / 2 - (doc.vat === 'none' ? 0 : 13), 'center');
+  font(27, 800); text(isRc ? '영수금액' : '합계금액', M + BL / 2, y + BH / 2 - (doc.vat === 'none' ? 0 : 13), 'center');
   if (doc.vat !== 'none') { font(19); text('(부가세 포함)', M + BL / 2, y + BH / 2 + 22, 'center', SUB); }
   const words = wonWords(c.total), nums = '₩' + won(c.total);
   fitFont(ctx, nums, 360, 40, 800); const nw = ctx.measureText(nums).width;
@@ -1311,7 +1491,7 @@ function drawDoc(ctx, doc, H) {
   // 품목 표: 품목이 적어도 표가 비어 보이지 않게 6줄을 채우고 「이하 여백」 표시
   const cols = [70, 0, 110, 170, 200]; cols[1] = CW - cols[0] - cols[2] - cols[3] - cols[4];
   const cx = [M]; cols.forEach((w, i) => cx.push(cx[i] + w));
-  const HH = 56, MINR = 6;
+  const HH = 56, MINR = isRc ? 4 : 6;
   box(M, y, CW, HH, HEAD, null);
   font(23, 700);
   ['번호', '품   명', '수량', '단가', '금액'].forEach((h, i) => text(h, cx[i] + cols[i] / 2, y + HH / 2, 'center'));
@@ -1340,7 +1520,7 @@ function drawDoc(ctx, doc, H) {
   // 안내 · 입금 계좌: 한 표로
   const info = [];
   if ((doc.memo || '').trim()) info.push([isQ ? '안  내' : '비  고', doc.memo.trim(), 400]);
-  if (accText()) info.push(['입금 계좌', accText(), 700]);
+  if (accText() && !isRc) info.push(['입금 계좌', accText(), 700]);   // 영수증은 이미 받은 돈이라 계좌를 넣지 않음
   if (info.length) {
     const IL = 130, top2 = y;
     info.forEach(r => { font(24, r[2]); r.lines = wrap(ctx, r[1], CW - IL - 36); r.h = Math.max(64, r.lines.length * 36 + 28); });
@@ -1371,12 +1551,13 @@ function makeImage(doc) {
 }
 
 /* ---------- 설정 ---------- */
-const SF = { sName: 'name', sOwner: 'owner', sBiz: 'biz', sPhone: 'phone', sAddr: 'addr', sKind: 'kind', sItem: 'item', sBank: 'bank', sAccount: 'account', sHolder: 'holder', sVat: 'vat', sMemoQ: 'memoQ', sMemoS: 'memoS', sMemoC: 'memoC' };
+const SF = { sName: 'name', sOwner: 'owner', sBiz: 'biz', sPhone: 'phone', sAddr: 'addr', sKind: 'kind', sItem: 'item', sBank: 'bank', sAccount: 'account', sHolder: 'holder', sVat: 'vat', sMemoQ: 'memoQ', sMemoS: 'memoS', sMemoC: 'memoC', sMemoR: 'memoR' };
 let tmpStamp = '';
 function enterSettings() {
   Object.entries(SF).forEach(([id, k]) => { $('#' + id).value = SET[k] || ''; $('#' + id).classList.remove('err'); });
   tmpStamp = SET.stamp; showStamp();
   $('#memoCWrap').hidden = !HAS_CONTRACT;
+  $('#memoSWrap').hidden = !DOC_TYPES.includes('stmt'); $('#memoRWrap').hidden = !DOC_TYPES.includes('receipt');
 }
 function showStamp() {
   $('#stampPrev').innerHTML = tmpStamp ? `<img src="${tmpStamp}" alt="도장">` : '도장 없음';
