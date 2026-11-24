@@ -874,8 +874,10 @@ function fitFont(ctx, text, maxW, size, weight) {
   return s;
 }
 
+// 문서 논리 폭: 글자 크기는 그대로 두고 종이를 넓혀 A4 문서 비율로 보이게 함(1080이면 글자가 너무 커 보였음)
+const DOC_W = 1400;
 function drawDoc(ctx, doc, H) {
-  const W = 1080, M = 56, R = W - M, CW = W - 2 * M;
+  const W = DOC_W, M = 68, R = W - M, CW = W - 2 * M;
   const t = TYPES[doc.type], c = calc(doc);
   const INK = '#1b1b1d', SUB = '#5b5c62', LINE = '#9a978f', SOFT = '#eef2f8', MAIN = '#1f4e8c', HEAD = '#e3e9f2', THIN = '#c9c6be';
   const font = (s, w = 400) => ctx.font = `${w} ${s}px ${FONT}`;
@@ -920,19 +922,26 @@ function drawDoc(ctx, doc, H) {
       y += h; hline(M, R, y, 1, THIN);
     });
     for (let i = 1; i < cols.length; i++) vline(cx[i], top, y, 1, THIN);
-    const sumRows = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
-    const sumTop = y;
-    sumRows.forEach(r => {
-      const h = 56;
-      box(cx[3], y, cols[3], h, r[2] ? HEAD : SOFT, null);
-      font(23, 700); text(r[0], cx[3] + cols[3] / 2, y + h / 2, 'center', r[2] ? INK : SUB);
-      font(r[2] ? 27 : 25, r[2] ? 800 : 600); text(won(r[1]), cx[5] - 14, y + h / 2, 'right', r[2] ? MAIN : INK);
-      y += h; hline(cx[3], R, y, 1, THIN);
-    });
-    vline(cx[3], sumTop, y, 1, THIN); vline(cx[4], sumTop, y, 1, THIN);
-    hline(cx[3], R, y, 2, INK); hline(M, cx[3], sumTop, 2, INK);
+    hline(M, R, y, 1.5, INK);
+    y = sumLine(y);
     return y;
   };
+  // 합계 줄: 공급가액 · 부가세 · 합계를 품목 표 아래 한 줄에
+  function sumLine(y) {
+    const sums = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
+    const SH2 = 64, pw = CW / sums.length, pl = sums.length === 1 ? 200 : 116;
+    sums.forEach((s, i) => {
+      const x = M + i * pw;
+      box(x, y, pl, SH2, s[2] ? HEAD : SOFT, null);
+      if (i) vline(x, y, y + SH2, 1.5, LINE);
+      vline(x + pl, y, y + SH2, 1, THIN);
+      font(22, 700); text(s[0], x + pl / 2, y + SH2 / 2, 'center', s[2] ? INK : SUB);
+      fitFont(ctx, won(s[1]), pw - pl - 30, s[2] ? 29 : 26, s[2] ? 800 : 600);
+      text(won(s[1]), x + pw - 16, y + SH2 / 2, 'right', s[2] ? MAIN : INK);
+    });
+    y += SH2; hline(M, R, y, 2.5, INK);
+    return y;
+  }
   const memoBox = (y, label) => {
     if (!(doc.memo || '').trim()) return y;
     font(24); const ml = wrap(ctx, doc.memo.trim(), CW - 40);
@@ -1072,7 +1081,7 @@ function drawDoc(ctx, doc, H) {
   /* ===== 견적서 · 거래명세서 ===== */
   const isQ = doc.type === 'quote';
   // 위: 받는 분 표(왼쪽) + 공급자 표(오른쪽) — 두 표 높이를 맞춤
-  const LW = 420, GAP = 20, LBW = 112;
+  const LW = Math.round(CW * 0.42), GAP = 24, LBW = 112;
   const TX = M + LW + GAP, TW = R - TX, VC = 46, LC = 112, VX = TX + VC + LC, VW = R - VX;
   const rows = [];
   if (SET.biz) rows.push(['등록번호', SET.biz]);
@@ -1169,20 +1178,7 @@ function drawDoc(ctx, doc, H) {
   }
   for (let i = 1; i < cols.length; i++) vline(cx[i], top, y, 1, THIN);
   hline(M, R, y, 1.5, INK);
-  // 합계 줄: 공급가액 · 부가세 · 합계를 한 줄에
-  const sums = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
-  const SH2 = 64, pw = CW / sums.length, pl = sums.length === 1 ? 200 : 116;
-  sums.forEach((s, i) => {
-    const x = M + i * pw;
-    box(x, y, pl, SH2, s[2] ? HEAD : SOFT, null);
-    if (i) vline(x, y, y + SH2, 1.5, LINE);
-    vline(x + pl, y, y + SH2, 1, THIN);
-    font(22, 700); text(s[0], x + pl / 2, y + SH2 / 2, 'center', s[2] ? INK : SUB);
-    fitFont(ctx, won(s[1]), pw - pl - 30, s[2] ? 29 : 26, s[2] ? 800 : 600);
-    text(won(s[1]), x + pw - 16, y + SH2 / 2, 'right', s[2] ? MAIN : INK);
-  });
-  y += SH2; hline(M, R, y, 2.5, INK);
-  y += 26;
+  y = sumLine(y) + 26;
 
   // 안내 · 입금 계좌: 한 표로
   const info = [];
@@ -1207,11 +1203,11 @@ function drawDoc(ctx, doc, H) {
 }
 
 function makeImage(doc) {
-  const S = 1.5;
+  const S = 1680 / DOC_W;   // 사진 가로 1680픽셀
   const m = document.createElement('canvas'); m.width = 10; m.height = 10;
   const H = Math.ceil(drawDoc(m.getContext('2d'), doc, 10));
   const cv = document.createElement('canvas');
-  cv.width = Math.round(1080 * S); cv.height = Math.round(H * S);
+  cv.width = Math.round(DOC_W * S); cv.height = Math.round(H * S);
   const ctx = cv.getContext('2d'); ctx.scale(S, S);
   drawDoc(ctx, doc, H);
   return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'));
