@@ -1542,9 +1542,10 @@ function drawDoc(ctx, doc, H) {
 }
 
 function makeImage(doc) {
-  const S = 1680 / DOC_W;   // 사진 가로 1680픽셀
   const m = document.createElement('canvas'); m.width = 10; m.height = 10;
   const H = Math.ceil(drawDoc(m.getContext('2d'), doc, 10));
+  // 사진 가로 1680픽셀. 아이폰 사파리는 캔버스 넓이 한도(약 1,670만 픽셀)를 넘으면 그림이 안 만들어지므로 아주 긴 문서는 조금 줄임
+  const S = Math.min(1680 / DOC_W, Math.sqrt(15e6 / (DOC_W * H)));
   const cv = document.createElement('canvas');
   cv.width = Math.round(DOC_W * S); cv.height = Math.round(H * S);
   const ctx = cv.getContext('2d'); ctx.scale(S, S);
