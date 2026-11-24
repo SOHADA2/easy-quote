@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e8c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="대성 견적서">
+<title>대성 인테리어 (간편 견적서)</title>
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3f1ec; --card:#fff; --ink:#1b1b1d; --sub:#55565c; --line:#d5d1c8;
+  --main:#1f4e8c; --main-dark:#173c6c; --main-soft:#e8eef7;
+  --kakao:#fee500; --danger:#b3261e; --ok:#1e7d3a;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{font-size:19px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5;
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  -webkit-tap-highlight-color:transparent;word-break:keep-all;overflow-wrap:anywhere}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* 상단 */
+.top{position:sticky;top:0;z-index:10;background:var(--main);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;display:flex;align-items:center;gap:10px;min-height:64px}
+.top h1{font-size:1.2rem;margin:0;flex:1;font-weight:700}
+.top .tbtn{background:transparent;border:2px solid rgba(255,255,255,.75);color:#fff;border-radius:8px;
+  padding:6px 14px;font-size:.95rem;font-weight:700;min-height:46px}
+.top .back{border:none;padding:6px 8px;font-size:1.05rem}
+
+main{max-width:640px;margin:0 auto;padding:16px 16px 140px}
+.view{display:none}
+.view.on{display:block}
+
+/* 공통 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 16px;margin-bottom:14px}
+.card h2{font-size:1.05rem;margin:0 0 12px}
+.hint{color:var(--sub);font-size:.88rem;margin:6px 0 0}
+label.f{display:block;font-weight:700;margin:16px 0 6px}
+label.f:first-child{margin-top:0}
+label.f small{font-weight:400;color:var(--sub);font-size:.85rem}
+input.t,select.t,textarea.t{width:100%;border:2px solid #bdb8ad;border-radius:8px;background:#fff;
+  padding:12px 12px;font-size:1.05rem;min-height:56px}
+input.t:focus,select.t:focus,textarea.t:focus{outline:none;border-color:var(--main)}
+textarea.t{min-height:96px;resize:vertical}
+.err{border-color:var(--danger)!important;background:#fdf1f0!important}
+
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:62px;border-radius:10px;
+  border:2px solid var(--main);background:var(--main);color:#fff;font-size:1.1rem;font-weight:700;padding:10px 16px}
+.btn:active{background:var(--main-dark)}
+.btn.line{background:#fff;color:var(--main)}
+.btn.line:active{background:var(--main-soft)}
+.btn.kakao{background:var(--kakao);border-color:#e0c900;color:#191600}
+.btn.kakao:active{background:#f0d800}
+.btn.ghost{background:transparent;border:none;color:var(--sub);min-height:50px;font-weight:600;text-decoration:underline}
+.btn + .btn{margin-top:10px}
+
+/* 홈 */
+.big{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--main);border-radius:12px;
+  padding:20px 18px;margin-bottom:14px}
+.big:active{background:var(--main-soft)}
+.big b{display:block;font-size:1.35rem;color:var(--main)}
+.big span{display:block;color:var(--sub);font-size:.92rem;margin-top:4px}
+.notice{background:#fff8dc;border:2px solid #e3c65a;border-radius:10px;padding:16px;margin-bottom:16px}
+.notice p{margin:0 0 12px;font-weight:600}
+.sec-title{font-size:1.05rem;font-weight:700;margin:26px 0 10px}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;display:flex;align-items:stretch}
+.hist .open{flex:1;background:none;border:none;text-align:left;padding:14px 14px;min-height:70px}
+.hist .open .r1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-size:.78rem;font-weight:700;border-radius:5px;padding:2px 7px;background:var(--main-soft);color:var(--main)}
+.tag.stmt{background:#e9f4ec;color:var(--ok)}
+.hist .who{font-weight:700;font-size:1.02rem}
+.hist .r2{color:var(--sub);font-size:.88rem;margin-top:2px}
+.hist .del{background:none;border:none;border-left:1px solid var(--line);color:var(--sub);padding:0 14px;font-size:.88rem;min-width:64px}
+.empty{color:var(--sub);text-align:center;padding:26px 0;background:#fff;border:1px dashed var(--line);border-radius:10px}
+
+/* 작성 */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{min-height:56px;border:2px solid #bdb8ad;background:#fff;border-radius:8px;font-weight:700;font-size:1.02rem}
+.seg button.on{border-color:var(--main);background:var(--main);color:#fff}
+.radio{display:block}
+.radio label{display:flex;align-items:center;gap:12px;border:2px solid #bdb8ad;border-radius:8px;background:#fff;
+  padding:12px 14px;margin-bottom:8px;min-height:56px;font-weight:600}
+.radio input{width:24px;height:24px;accent-color:var(--main);margin:0;flex:none}
+.radio label.on{border-color:var(--main);background:var(--main-soft)}
+.radio small{display:block;font-weight:400;color:var(--sub);font-size:.82rem}
+
+.item{border:2px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:#fcfbf8}
+.item .ih{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.item .ih b{font-size:.98rem}
+.item .rm{background:#fff;border:2px solid #d9b4b1;color:var(--danger);border-radius:8px;padding:4px 12px;min-height:44px;font-weight:700;font-size:.88rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.row2 .lb{font-size:.86rem;font-weight:700;color:var(--sub);margin-bottom:4px}
+.qty{display:flex;align-items:stretch}
+.qty button{flex:none;width:40px;border:2px solid #bdb8ad;background:#fff;font-size:1.4rem;font-weight:700;line-height:1}
+.qty button:first-child{border-radius:8px 0 0 8px;border-right:none}
+.qty button:last-child{border-radius:0 8px 8px 0;border-left:none}
+.qty input{border-radius:0;text-align:center;padding:12px 2px;min-width:0}
+.won{position:relative}
+.won input{padding-right:36px;text-align:right}
+.won::after{content:"원";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--sub);font-weight:600}
+.amt{text-align:right;margin-top:10px;font-size:1rem}
+.amt b{font-size:1.15rem}
+.add{width:100%;min-height:62px;border:2px dashed var(--main);background:#fff;color:var(--main);border-radius:10px;font-weight:700;font-size:1.08rem}
+.add:active{background:var(--main-soft)}
+.sum{border:2px solid var(--main);border-radius:10px;background:#fff;padding:14px 16px}
+.sum .l{display:flex;justify-content:space-between;padding:4px 0;font-size:1rem}
+.sum .l.tot{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;font-size:1.2rem;font-weight:800;color:var(--main)}
+.sum .words{text-align:right;color:var(--sub);font-size:.86rem}
+
+/* 하단 고정 */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(243,241,236,.97);border-top:1px solid var(--line);
+  padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);display:none}
+.bar.on{display:block}
+.bar .in{max-width:640px;margin:0 auto}
+
+/* 미리보기 */
+.paper{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;min-height:200px;display:flex;align-items:center;justify-content:center}
+.paper img{display:block;width:100%;height:auto}
+.paper .wait{color:var(--sub);padding:40px}
+
+/* 설정 */
+.stamp-box{display:flex;gap:14px;align-items:center}
+.stamp-prev{width:96px;height:96px;border:2px dashed #bdb8ad;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.8rem;text-align:center;flex:none;overflow:hidden}
+.stamp-prev img{max-width:100%;max-height:100%}
+.stamp-btns{flex:1}
+.stamp-btns .btn{min-height:52px;font-size:1rem}
+
+.toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#222;color:#fff;padding:14px 20px;border-radius:10px;
+  font-weight:600;z-index:50;max-width:88%;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.foot{color:var(--sub);font-size:.84rem;text-align:center;margin-top:30px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="tbtn back" id="backBtn" hidden>&larr; 뒤로</button>
+  <h1 id="topTitle">대성 인테리어</h1>
+  <button class="tbtn" id="setBtn">내 정보</button>
+</header>
+
+<main>
+  <!-- 홈 -->
+  <section class="view" id="v-home">
+    <div class="notice" id="firstNotice" hidden>
+      <p>처음 한 번만 내 사업장 정보를 적어 두면, 다음부터는 손님 이름과 품목만 쓰면 됩니다.</p>
+      <button class="btn" data-go="settings">내 사업장 정보 적기</button>
+    </div>
+
+    <button class="big" data-new="quote"><b>견적서 쓰기</b><span>일을 하기 전에 금액을 알려 드릴 때</span></button>
+    <button class="big" data-new="stmt"><b>거래명세서 쓰기</b><span>물건을 보내거나 일을 마친 뒤</span></button>
+
+    <div class="sec-title">작성한 기록</div>
+    <ul class="hist" id="histList"></ul>
+    <p class="foot">휴대폰 브라우저 메뉴에서 「홈 화면에 추가」를 누르면 앱처럼 바로 열 수 있습니다.</p>
+  </section>
+
+  <!-- 작성 -->
+  <section class="view" id="v-write">
+    <div class="card">
+      <label class="f">무엇을 보냅니까?</label>
+      <div class="seg" id="typeSeg">
+        <button data-type="quote">견적서</button>
+        <button data-type="stmt">거래명세서</button>
+      </div>
+
+      <label class="f" for="wCustomer">받는 분 <small>(손님 이름 또는 상호)</small></label>
+      <input class="t" id="wCustomer" list="custList" autocomplete="off" placeholder="예) 김철수 / 행복식당">
+      <datalist id="custList"></datalist>
+
+      <label class="f" for="wDate">날짜</label>
+      <input class="t" id="wDate" type="date">
+    </div>
+
+    <div class="card">
+      <h2>품목</h2>
+      <div id="items"></div>
+      <datalist id="itemList"></datalist>
+      <button class="add" id="addItem">+ 품목 하나 더 넣기</button>
+    </div>
+
+    <div class="card">
+      <h2>부가세</h2>
+      <div class="radio" id="vatRadio">
+        <label><input type="radio" name="vat" value="add"><span>부가세 별도<small>적은 금액에 10%를 더합니다</small></span></label>
+        <label><input type="radio" name="vat" value="incl"><span>부가세 포함<small>적은 금액 안에 부가세가 들어 있습니다</small></span></label>
+        <label><input type="radio" name="vat" value="none"><span>부가세 없음<small>간이과세·면세 사업자</small></span></label>
+      </div>
+      <div class="sum" id="sumBox"></div>
+    </div>
+
+    <div class="card">
+      <label class="f" for="wMemo">안내 문구 <small>(없으면 비워 두세요)</small></label>
+      <textarea class="t" id="wMemo" placeholder="예) 견적 유효기간: 발행일로부터 30일"></textarea>
+    </div>
+  </section>
+
+  <!-- 미리보기 -->
+  <section class="view" id="v-preview">
+    <div class="paper" id="paper"><div class="wait">만드는 중입니다…</div></div>
+    <p class="hint" style="text-align:center">손님에게는 이 사진이 그대로 전달됩니다.</p>
+  </section>
+
+  <!-- 설정 -->
+  <section class="view" id="v-settings">
+    <div class="card">
+      <h2>사업장 정보</h2>
+      <label class="f" for="sName">상호 <small>(가게·회사 이름)</small></label>
+      <input class="t" id="sName" placeholder="예) 행복인테리어">
+      <label class="f" for="sOwner">대표자 이름</label>
+      <input class="t" id="sOwner" placeholder="예) 홍길동">
+      <label class="f" for="sBiz">사업자등록번호 <small>(선택)</small></label>
+      <input class="t" id="sBiz" inputmode="numeric" placeholder="000-00-00000">
+      <label class="f" for="sPhone">전화번호</label>
+      <input class="t" id="sPhone" inputmode="tel" placeholder="010-0000-0000">
+      <label class="f" for="sAddr">주소 <small>(선택)</small></label>
+      <input class="t" id="sAddr" placeholder="예) 서울시 ○○구 ○○로 12">
+      <label class="f" for="sKind">업태 <small>(선택 · 사업자등록증에 있음)</small></label>
+      <input class="t" id="sKind" placeholder="예) 건설업">
+      <label class="f" for="sItem">종목 <small>(선택)</small></label>
+      <input class="t" id="sItem" placeholder="예) 실내건축, 설비">
+    </div>
+
+    <div class="card">
+      <h2>입금 계좌 <small style="font-weight:400;color:var(--sub);font-size:.85rem">(선택)</small></h2>
+      <label class="f" for="sBank">은행</label>
+      <input class="t" id="sBank" list="bankList" placeholder="예) 농협">
+      <datalist id="bankList">
+        <option>국민은행</option><option>신한은행</option><option>우리은행</option><option>하나은행</option>
+        <option>농협</option><option>기업은행</option><option>카카오뱅크</option><option>토스뱅크</option>
+        <option>새마을금고</option><option>신협</option><option>우체국</option><option>수협</option>
+        <option>부산은행</option><option>대구은행</option><option>경남은행</option><option>광주은행</option><option>SC제일은행</option>
+      </datalist>
+      <label class="f" for="sAccount">계좌번호</label>
+      <input class="t" id="sAccount" inputmode="numeric" placeholder="예) 123-4567-8901-23">
+      <label class="f" for="sHolder">예금주</label>
+      <input class="t" id="sHolder" placeholder="예) 홍길동">
+    </div>
+
+    <div class="card">
+      <h2>도장 <small style="font-weight:400;color:var(--sub);font-size:.85rem">(선택)</small></h2>
+      <div class="stamp-box">
+        <div class="stamp-prev" id="stampPrev">도장 없음</div>
+        <div class="stamp-btns">
+          <button class="btn line" id="stampPick">도장 사진 넣기</button>
+          <button class="btn ghost" id="stampDel" hidden>도장 빼기</button>
+        </div>
+      </div>
+      <p class="hint">흰 종이에 도장을 찍고 가까이서 찍은 사진을 넣으면, 흰 바탕은 자동으로 지워집니다.</p>
+      <input type="file" id="stampFile" accept="image/*" hidden>
+    </div>
+
+    <div class="card">
+      <h2>기본으로 쓸 내용</h2>
+      <label class="f">부가세</label>
+      <select class="t" id="sVat">
+        <option value="add">부가세 별도 (10% 더함)</option>
+        <option value="incl">부가세 포함</option>
+        <option value="none">부가세 없음</option>
+      </select>
+      <label class="f" for="sMemoQ">견적서 안내 문구</label>
+      <textarea class="t" id="sMemoQ"></textarea>
+      <label class="f" for="sMemoS">거래명세서 안내 문구</label>
+      <textarea class="t" id="sMemoS" placeholder="예) 입금 확인 후 세금계산서를 발행합니다."></textarea>
+    </div>
+  </section>
+</main>
+
+<div class="bar" id="bar-write"><div class="in">
+  <button class="btn" id="toPreview">다 썼습니다 · 미리 보기</button>
+</div></div>
+<div class="bar" id="bar-preview"><div class="in">
+  <button class="btn kakao" id="shareBtn">카카오톡으로 보내기</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+    <button class="btn line" id="saveBtn" style="min-height:54px;font-size:1rem">사진으로 저장</button>
+    <button class="btn line" id="editBtn" style="min-height:54px;font-size:1rem">고치기</button>
+  </div>
+</div></div>
+<div class="bar" id="bar-settings"><div class="in">
+  <button class="btn" id="saveSet">저장하기</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>window.EQ_PRESET = {"id":"daesung","appName":"대성 인테리어","settings":{"name":"대성인테리어설비","owner":"소병곤","biz":"105-12-52179","addr":"서울특별시 마포구 성암로11길 9, 1층 좌측(중동)","kind":"건설업","item":"난방시공, 설비, 인테리어","phone":"","bank":"","account":"","holder":"","vat":"add","memoQ":"견적 유효기간: 발행일로부터 30일","memoS":""},"items":[]};</script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const FONT = '-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif';
+
+const TYPES = {
+  quote: { name: '견적서', title: '견   적   서', lead: '아래와 같이 견적합니다.' },
+  stmt:  { name: '거래명세서', title: '거 래 명 세 서', lead: '아래와 같이 거래합니다.' },
+};
+const DEFAULT_SET = {
+  name: '', owner: '', biz: '', phone: '', addr: '', kind: '', item: '',
+  bank: '', account: '', holder: '', stamp: '',
+  vat: 'add', memoQ: '견적 유효기간: 발행일로부터 30일', memoS: '',
+};
+
+/* ---------- 저장소 ---------- */
+/* 업체 전용판: 각 업체 폴더의 index.html에 window.EQ_PRESET이 들어감 (tools/build.mjs) */
+const PRESET = window.EQ_PRESET || {};
+const KEY = 'eq_' + (PRESET.id ? PRESET.id + '_' : '');
+const APP_NAME = PRESET.appName || '간편 견적서';
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) {
+    try { localStorage.setItem(KEY + k, JSON.stringify(v)); return true; }
+    catch (e) { toast('휴대폰 저장 공간이 부족해 저장하지 못했습니다.'); return false; }
+  },
+};
+let SET = Object.assign({}, DEFAULT_SET, PRESET.settings || {}, LS.get('settings', {}));
+let DOCS = LS.get('docs', []);
+let cur = LS.get('cur', null);
+let stampImg = null;
+let shareFile = null, shareURL = null;
+
+/* ---------- 도우미 ---------- */
+const num = v => { const n = parseFloat(String(v ?? '').replace(/[^\d.]/g, '')); return isFinite(n) ? n : 0; };
+const won = n => Math.round(n).toLocaleString('ko-KR');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const dateKo = s => { const [y, m, d] = (s || today()).split('-'); return `${y}년 ${+m}월 ${+d}일`; };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+function fmtPhone(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 11);
+  if (d.startsWith('02')) {
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return d.slice(0, 2) + '-' + d.slice(2);
+    if (d.length <= 9) return d.slice(0, 2) + '-' + d.slice(2, d.length - 4) + '-' + d.slice(-4);
+    return d.slice(0, 2) + '-' + d.slice(2, 6) + '-' + d.slice(6, 10);
+  }
+  if (d.length <= 3) return d;
+  if (d.length <= 7) return d.slice(0, 3) + '-' + d.slice(3);
+  if (d.length <= 10) return d.slice(0, 3) + '-' + d.slice(3, d.length - 4) + '-' + d.slice(-4);
+  return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7);
+}
+function fmtBiz(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 5) return d.slice(0, 3) + '-' + d.slice(3);
+  return d.slice(0, 3) + '-' + d.slice(3, 5) + '-' + d.slice(5);
+}
+function fmtPriceInput(el) {
+  const d = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 13);
+  el.value = d ? Number(d).toLocaleString('ko-KR') : '';
+}
+
+/* 금액 → 한글 (일금 일백이십만원정) */
+function wonWords(n) {
+  n = Math.round(n);
+  if (n <= 0) return '일금 영원정';
+  const dg = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+  const sm = ['', '십', '백', '천'], bg = ['', '만', '억', '조'];
+  let s = '', g = 0;
+  while (n > 0) {
+    const part = n % 10000;
+    if (part) {
+      let p = '';
+      String(part).padStart(4, '0').split('').forEach((c, i) => { if (c !== '0') p += dg[c] + sm[3 - i]; });
+      s = p + bg[g] + s;
+    }
+    n = Math.floor(n / 10000); g++;
+  }
+  return '일금 ' + s + '원정';
+}
+
+function calc(doc) {
+  const sum = doc.items.reduce((a, it) => a + Math.round(num(it.qty) * num(it.price)), 0);
+  let supply, vat, total;
+  if (doc.vat === 'add') { supply = sum; vat = Math.floor(sum * 0.1); total = sum + vat; }
+  else if (doc.vat === 'incl') { total = sum; supply = Math.round(sum / 1.1); vat = total - supply; }
+  else { supply = sum; vat = 0; total = sum; }
+  return { sum, supply, vat, total };
+}
+
+/* ---------- 화면 이동 ---------- */
+let navDepth = 0;
+const TITLES = { home: APP_NAME, settings: '내 사업장 정보', preview: '미리 보기' };
+function go(v) { navDepth++; location.hash = v; }
+function back() { if (navDepth > 0) { navDepth--; history.back(); } else location.replace('#home'); }
+
+function render() {
+  let v = location.hash.slice(1) || 'home';
+  if (!['home', 'write', 'preview', 'settings'].includes(v)) v = 'home';
+  if ((v === 'write' || v === 'preview') && !cur) { location.replace('#home'); return; }
+  $$('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
+  $$('.bar').forEach(e => e.classList.toggle('on', e.id === 'bar-' + v));
+  $('#backBtn').hidden = v === 'home';
+  $('#setBtn').hidden = v !== 'home';
+  $('#topTitle').textContent = v === 'write' ? TYPES[cur.type].name + ' 쓰기' : TITLES[v];
+  window.scrollTo(0, 0);
+  ({ home: enterHome, write: enterWrite, preview: enterPreview, settings: enterSettings })[v]();
+}
+window.addEventListener('hashchange', render);
+$('#backBtn').onclick = back;
+$('#setBtn').onclick = () => go('settings');
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
+  const n = e.target.closest('[data-new]'); if (n) newDoc(n.dataset.new);
+});
+
+/* ---------- 홈 ---------- */
+function enterHome() {
+  $('#firstNotice').hidden = !!SET.name;
+  const ul = $('#histList');
+  if (!DOCS.length) { ul.innerHTML = '<li class="empty" style="display:block">아직 작성한 기록이 없습니다.</li>'; return; }
+  ul.innerHTML = DOCS.map(d => `
+    <li>
+      <button class="open" data-id="${d.id}">
+        <div class="r1"><span class="tag ${d.type}">${TYPES[d.type].name}</span><span class="who">${esc(d.customer || '(받는 분 없음)')}</span></div>
+        <div class="r2">${dateKo(d.date)} · ${won(calc(d).total)}원</div>
+      </button>
+      <button class="del" data-del="${d.id}">지우기</button>
+    </li>`).join('');
+}
+$('#histList').addEventListener('click', e => {
+  const o = e.target.closest('[data-id]'), dl = e.target.closest('[data-del]');
+  if (o) {
+    const d = DOCS.find(x => x.id === o.dataset.id); if (!d) return;
+    cur = JSON.parse(JSON.stringify(d)); LS.set('cur', cur); go('write');
+  } else if (dl) {
+    const d = DOCS.find(x => x.id === dl.dataset.del); if (!d) return;
+    if (!confirm(`${d.customer || '받는 분 없음'} ${TYPES[d.type].name}를 지울까요?`)) return;
+    DOCS = DOCS.filter(x => x.id !== d.id); LS.set('docs', DOCS); enterHome(); toast('지웠습니다.');
+  }
+});
+
+function newDoc(type) {
+  if (!SET.name && !confirm('아직 내 사업장 정보가 없습니다.\n그래도 먼저 쓰시겠습니까?\n(「취소」를 누르면 정보 적는 화면으로 갑니다)')) { go('settings'); return; }
+  cur = {
+    id: uid(), type, customer: '', date: today(),
+    items: [{ name: '', qty: '1', price: '' }],
+    vat: SET.vat, memo: type === 'quote' ? SET.memoQ : SET.memoS,
+  };
+  LS.set('cur', cur); go('write');
+}
+
+/* ---------- 작성 ---------- */
+function priceBook() {          // 예전에 쓴 품목 → 단가
+  const m = new Map();
+  (PRESET.items || []).forEach(it => m.set(it.name, it.price));
+  [...DOCS].reverse().forEach(d => d.items.forEach(it => { if (it.name && num(it.price)) m.set(it.name.trim(), it.price); }));
+  return m;
+}
+function enterWrite() {
+  $$('#typeSeg button').forEach(b => b.classList.toggle('on', b.dataset.type === cur.type));
+  $('#wCustomer').value = cur.customer; $('#wCustomer').classList.remove('err');
+  $('#wDate').value = cur.date;
+  $('#wMemo').value = cur.memo || '';
+  $$('#vatRadio input').forEach(r => { r.checked = r.value === cur.vat; r.parentElement.classList.toggle('on', r.checked); });
+  const custs = [...new Set(DOCS.map(d => d.customer).filter(Boolean))];
+  $('#custList').innerHTML = custs.map(c => `<option value="${esc(c)}">`).join('');
+  $('#itemList').innerHTML = [...priceBook().keys()].map(c => `<option value="${esc(c)}">`).join('');
+  renderItems(); renderSum();
+}
+function saveCur() { LS.set('cur', cur); }
+
+function renderItems() {
+  $('#items').innerHTML = cur.items.map((it, i) => `
+    <div class="item" data-i="${i}">
+      <div class="ih"><b>${i + 1}번 품목</b>${cur.items.length > 1 ? `<button class="rm" data-rm="${i}">빼기</button>` : ''}</div>
+      <input class="t" data-f="name" list="itemList" autocomplete="off" placeholder="품목 이름 (예: 도배, 사과 1박스)" value="${esc(it.name)}">
+      <div class="row2">
+        <div><div class="lb">수량</div>
+          <div class="qty"><button data-q="-1" aria-label="수량 줄이기">−</button><input class="t" data-f="qty" inputmode="decimal" value="${esc(it.qty)}"><button data-q="1" aria-label="수량 늘리기">+</button></div>
+        </div>
+        <div><div class="lb">단가 (1개 값)</div>
+          <div class="won"><input class="t" data-f="price" inputmode="numeric" placeholder="0" value="${esc(it.price)}"></div>
+        </div>
+      </div>
+      <div class="amt">금액 <b data-amt>${won(num(it.qty) * num(it.price))}</b>원</div>
+    </div>`).join('');
+}
+function refreshAmt(i) {
+  const it = cur.items[i]; const box = $(`.item[data-i="${i}"] [data-amt]`);
+  if (box) box.textContent = won(num(it.qty) * num(it.price));
+  renderSum();
+}
+function renderSum() {
+  const c = calc(cur);
+  let h = '';
+  if (cur.vat !== 'none') h += `<div class="l"><span>공급가액</span><span>${won(c.supply)}원</span></div><div class="l"><span>부가세</span><span>${won(c.vat)}원</span></div>`;
+  h += `<div class="l tot"><span>합계</span><span>${won(c.total)}원</span></div><div class="words">${wonWords(c.total)}</div>`;
+  $('#sumBox').innerHTML = h;
+}
+
+$('#items').addEventListener('input', e => {
+  const f = e.target.dataset.f; if (!f) return;
+  const i = +e.target.closest('.item').dataset.i;
+  if (f === 'price') fmtPriceInput(e.target);
+  if (f === 'qty') { let v = e.target.value.replace(/[^\d.]/g, ''); const p = v.split('.'); if (p.length > 2) v = p[0] + '.' + p.slice(1).join(''); e.target.value = v; }
+  e.target.classList.remove('err');
+  cur.items[i][f] = e.target.value; refreshAmt(i); saveCur();
+});
+$('#items').addEventListener('change', e => {      // 예전에 쓴 품목을 고르면 단가 자동 채움
+  if (e.target.dataset.f !== 'name') return;
+  const i = +e.target.closest('.item').dataset.i, it = cur.items[i];
+  const p = priceBook().get(e.target.value.trim());
+  if (p && !num(it.price)) { it.price = p; e.target.closest('.item').querySelector('[data-f="price"]').value = p; refreshAmt(i); saveCur(); toast('예전에 쓴 단가를 넣었습니다.'); }
+});
+$('#items').addEventListener('click', e => {
+  const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
+  if (q) {
+    const i = +q.closest('.item').dataset.i, it = cur.items[i];
+    const n = Math.max(0, Math.round((num(it.qty) + +q.dataset.q) * 100) / 100);
+    it.qty = String(n); q.closest('.qty').querySelector('input').value = it.qty; refreshAmt(i); saveCur();
+  } else if (rm) {
+    const i = +rm.dataset.rm, it = cur.items[i];
+    if ((it.name || num(it.price)) && !confirm(`${i + 1}번 품목${it.name ? '(' + it.name + ')' : ''}을 뺄까요?`)) return;
+    cur.items.splice(i, 1); renderItems(); renderSum(); saveCur();
+  }
+});
+$('#addItem').onclick = () => {
+  cur.items.push({ name: '', qty: '1', price: '' }); renderItems(); renderSum(); saveCur();
+  const last = $$('#items .item').pop(); last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => last.querySelector('[data-f="name"]').focus(), 300);
+};
+$('#typeSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-type]'); if (!b || b.dataset.type === cur.type) return;
+  const old = cur.type; cur.type = b.dataset.type;
+  // 안내 문구가 기본값 그대로면 종류에 맞게 바꿔 줌
+  if ((cur.memo || '') === (old === 'quote' ? SET.memoQ : SET.memoS)) { cur.memo = cur.type === 'quote' ? SET.memoQ : SET.memoS; $('#wMemo').value = cur.memo; }
+  $$('#typeSeg button').forEach(x => x.classList.toggle('on', x === b));
+  $('#topTitle').textContent = TYPES[cur.type].name + ' 쓰기'; saveCur();
+});
+$('#wCustomer').addEventListener('input', e => { cur.customer = e.target.value; e.target.classList.remove('err'); saveCur(); });
+$('#wDate').addEventListener('change', e => { cur.date = e.target.value || today(); saveCur(); });
+$('#wMemo').addEventListener('input', e => { cur.memo = e.target.value; saveCur(); });
+$('#vatRadio').addEventListener('change', e => {
+  cur.vat = e.target.value; $$('#vatRadio input').forEach(r => r.parentElement.classList.toggle('on', r.checked)); renderSum(); saveCur();
+});
+
+$('#toPreview').onclick = () => {
+  const c = $('#wCustomer');
+  if (!cur.customer.trim()) { c.classList.add('err'); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('받는 분을 적어 주세요.'); return; }
+  cur.items = cur.items.filter((it, i) => it.name.trim() || num(it.price) || i === 0);
+  const firstBad = cur.items.findIndex(it => !it.name.trim());
+  if (firstBad >= 0) {
+    renderItems(); renderSum();
+    const el = $(`.item[data-i="${firstBad}"] [data-f="name"]`); el.classList.add('err');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast(`${firstBad + 1}번 품목 이름을 적어 주세요.`); return;
+  }
+  // 기록에 저장 (같은 문서면 덮어쓰기)
+  cur.savedAt = Date.now();
+  DOCS = [JSON.parse(JSON.stringify(cur)), ...DOCS.filter(d => d.id !== cur.id)].slice(0, 300);
+  LS.set('docs', DOCS); saveCur();
+  go('preview');
+};
+
+/* ---------- 미리보기·공유 ---------- */
+let previewGen = 0;
+async function enterPreview() {
+  const gen = ++previewGen;
+  const paper = $('#paper');
+  paper.innerHTML = '<div class="wait">만드는 중입니다…</div>';
+  shareFile = null;
+  $('#shareBtn').disabled = true;
+  try {
+    await loadStamp();
+    if (gen !== previewGen) return;
+    const blob = await makeImage(cur);
+    if (gen !== previewGen) return;
+    const t = TYPES[cur.type];
+    const fname = `${t.name}_${cur.customer.trim().replace(/[\\/:*?"<>|\s]+/g, '') || '손님'}_${cur.date.replace(/-/g, '')}.png`;
+    shareFile = new File([blob], fname, { type: 'image/png' });
+    if (shareURL) URL.revokeObjectURL(shareURL);
+    shareURL = URL.createObjectURL(blob);
+    paper.innerHTML = `<img src="${shareURL}" alt="${t.name} 미리 보기">`;
+  } catch (e) {
+    paper.innerHTML = '<div class="wait">사진을 만들지 못했습니다. 다시 시도해 주세요.</div>';
+    console.error(e);
+  }
+  $('#shareBtn').disabled = false;
+}
+$('#editBtn').onclick = back;
+$('#shareBtn').onclick = async () => {
+  if (!shareFile) return;
+  if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+    try { await navigator.share({ files: [shareFile] }); }
+    catch (e) { if (e.name !== 'AbortError') { download(); toast('사진을 저장했습니다. 카카오톡에서 사진으로 보내 주세요.'); } }
+  } else {
+    download();
+    toast('사진을 저장했습니다. 카카오톡 대화방에서 + 를 눌러 사진으로 보내 주세요.');
+  }
+};
+$('#saveBtn').onclick = () => { if (shareFile) { download(); toast('사진을 저장했습니다. 저장이 안 되면 사진을 길게 눌러 주세요.'); } };
+function download() {
+  const a = document.createElement('a'); a.href = shareURL; a.download = shareFile.name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function loadStamp() {
+  return new Promise(res => {
+    if (!SET.stamp) { stampImg = null; return res(); }
+    if (stampImg && stampImg.src === SET.stamp && stampImg.complete) return res();
+    const im = new Image(); im.onload = () => { stampImg = im; res(); }; im.onerror = () => { stampImg = null; res(); }; im.src = SET.stamp;
+  });
+}
+
+/* ---------- 문서 그림 그리기 ---------- */
+function wrap(ctx, text, maxW) {
+  const out = [];
+  String(text || '').split('\n').forEach(para => {
+    let line = '';
+    for (const ch of para) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxW && line) {
+        const sp = line.lastIndexOf(' ');
+        if (sp > 0 && sp > line.length - 8) { out.push(line.slice(0, sp)); line = line.slice(sp + 1) + ch; }
+        else { out.push(line); line = ch; }
+      } else line = test;
+    }
+    out.push(line);
+  });
+  return out;
+}
+function fitFont(ctx, text, maxW, size, weight) {
+  let s = size; ctx.font = `${weight} ${s}px ${FONT}`;
+  while (ctx.measureText(text).width > maxW && s > 14) { s -= 1; ctx.font = `${weight} ${s}px ${FONT}`; }
+  return s;
+}
+
+function drawDoc(ctx, doc, H) {
+  const W = 1080, M = 56, R = W - M, CW = W - 2 * M;
+  const t = TYPES[doc.type], c = calc(doc);
+  const INK = '#1b1b1d', SUB = '#5b5c62', LINE = '#9a978f', SOFT = '#eef2f8', MAIN = '#1f4e8c';
+  const font = (s, w = 400) => ctx.font = `${w} ${s}px ${FONT}`;
+  const text = (s, x, y, align = 'left', color = INK) => { ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); };
+  const hline = (x1, x2, y, w = 1.5, col = LINE) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); };
+  const vline = (x, y1, y2, w = 1.5, col = LINE) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke(); };
+  const box = (x, y, w, h, fill, stroke = LINE, lw = 1.5) => { if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.strokeRect(x, y, w, h); } };
+  ctx.textBaseline = 'middle';
+
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+  // 제목
+  let y = 64;
+  font(60, 800); text(t.title, W / 2, y + 30, 'center');
+  const tw = Math.min(ctx.measureText(t.title).width + 60, CW);
+  hline(W / 2 - tw / 2, W / 2 + tw / 2, y + 74, 2.5, INK);
+  hline(W / 2 - tw / 2, W / 2 + tw / 2, y + 81, 1.2, INK);
+  y = 180;
+
+  // 왼쪽: 날짜·받는 분
+  const LW = 420;
+  let ly = y + 10;
+  font(27); text(dateKo(doc.date), M, ly + 16, 'left', SUB); ly += 56;
+  font(40, 800);
+  let custLines = wrap(ctx, (doc.customer || '').trim(), LW - 80), cs = 40;
+  if (custLines.length > 2) { cs = 32; font(cs, 800); custLines = wrap(ctx, (doc.customer || '').trim(), LW - 70); }
+  custLines.forEach((ln, i) => {
+    text(ln, M, ly + 22, 'left');
+    if (i === custLines.length - 1) { const w = ctx.measureText(ln).width; font(cs - 10, 600); text('귀하', M + w + 14, ly + 24, 'left'); font(cs, 800); }
+    ly += cs + 12;
+  });
+  hline(M, M + LW, ly + 4, 2, INK); ly += 34;
+  font(27); text(t.lead, M, ly + 14, 'left'); ly += 50;
+
+  // 오른쪽: 공급자 표
+  const TX = M + LW + 30, TW = R - TX, VC = 46, LC = 112, VX = TX + VC + LC, VW = R - VX;
+  const rows = [];
+  if (SET.biz) rows.push(['등록번호', SET.biz]);
+  rows.push(['상  호', SET.name || '']);
+  if (SET.owner) rows.push(['대 표 자', SET.owner, 'owner']);
+  if (SET.addr) rows.push(['주  소', SET.addr]);
+  if (SET.kind || SET.item) rows.push(['업태·종목', [SET.kind, SET.item].filter(Boolean).join(' / ')]);
+  if (SET.phone) rows.push(['연 락 처', SET.phone]);
+  font(24);
+  const rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 24); return Math.max(54, r.lines.length * 31 + 22); });
+  const tH = rh.reduce((a, b) => a + b, 0);
+  box(TX, y, VC, tH, SOFT); box(TX + VC, y, LC, tH, SOFT); box(TX, y, TW, tH, null, INK, 2);
+  vline(TX + VC, y, y + tH); vline(VX, y, y + tH);
+  font(24, 700);
+  const sup = ['공', '급', '자'];
+  sup.forEach((ch, i) => text(ch, TX + VC / 2, y + tH / 2 + (i - 1) * Math.min(40, tH / 3.4), 'center'));
+  let ry = y, stampRow = null;
+  rows.forEach((r, i) => {
+    if (i) hline(TX + VC, R, ry);
+    font(22, 700); text(r[0], TX + VC + LC / 2, ry + rh[i] / 2, 'center', SUB);
+    font(24, r[2] === 'owner' || i === (SET.biz ? 1 : 0) ? 700 : 400);
+    r.lines.forEach((ln, j) => text(ln, VX + 14, ry + rh[i] / 2 + (j - (r.lines.length - 1) / 2) * 31, 'left'));
+    if (r[2] === 'owner' || (!SET.owner && r[0] === '상  호')) stampRow = { y: ry, h: rh[i], w: ctx.measureText(r.lines[r.lines.length - 1]).width };
+    ry += rh[i];
+  });
+  if (stampImg && stampRow) {
+    const sz = 88, ar = stampImg.width / stampImg.height;
+    const w = ar >= 1 ? sz : sz * ar, h = ar >= 1 ? sz / ar : sz;
+    const sx = Math.min(R - w - 10, VX + 14 + stampRow.w + 8);
+    ctx.globalAlpha = 0.92; ctx.drawImage(stampImg, sx, stampRow.y + stampRow.h / 2 - h / 2, w, h); ctx.globalAlpha = 1;
+  }
+  y = Math.max(ly, y + tH) + 34;
+
+  // 합계금액 띠
+  const BH = 118, BL = 190;
+  box(M, y, CW, BH, SOFT, INK, 2); vline(M + BL, y, y + BH, 1.5, INK);
+  font(28, 800); text('합계금액', M + BL / 2, y + BH / 2 - (doc.vat === 'none' ? 0 : 14), 'center');
+  if (doc.vat !== 'none') { font(20); text('(부가세 포함)', M + BL / 2, y + BH / 2 + 22, 'center', SUB); }
+  const words = wonWords(c.total), nums = '₩' + won(c.total);
+  fitFont(ctx, words, CW - BL - 40, 30, 700); text(words, M + BL + 22, y + 38, 'left');
+  fitFont(ctx, nums, CW - BL - 40, 38, 800); text(nums, M + BL + 22, y + 82, 'left', MAIN);
+  y += BH + 26;
+
+  // 품목 표
+  const cols = [64, 0, 104, 170, 190]; cols[1] = CW - cols[0] - cols[2] - cols[3] - cols[4];
+  const cx = [M]; cols.forEach((w, i) => cx.push(cx[i] + w));
+  const HH = 54;
+  box(M, y, CW, HH, '#e3e9f2', null);
+  font(23, 700);
+  ['번호', '품   명', '수량', '단가', '금액'].forEach((h, i) => text(h, cx[i] + cols[i] / 2, y + HH / 2, 'center'));
+  hline(M, R, y, 2, INK); hline(M, R, y + HH, 1.5, INK);
+  const tableTop = y; y += HH;
+  font(25);
+  doc.items.forEach((it, i) => {
+    const lines = wrap(ctx, it.name, cols[1] - 24);
+    const h = Math.max(58, lines.length * 33 + 24);
+    font(23); text(String(i + 1), cx[0] + cols[0] / 2, y + h / 2, 'center', SUB);
+    font(25); lines.forEach((ln, j) => text(ln, cx[1] + 12, y + h / 2 + (j - (lines.length - 1) / 2) * 33, 'left'));
+    const q = num(it.qty); text(q % 1 ? String(q) : q.toLocaleString('ko-KR'), cx[2] + cols[2] / 2, y + h / 2, 'center');
+    text(won(num(it.price)), cx[4] - 14, y + h / 2, 'right');
+    font(25, 700); text(won(Math.round(q * num(it.price))), cx[5] - 14, y + h / 2, 'right');
+    y += h; hline(M, R, y, 1, '#c9c6be');
+  });
+  for (let i = 1; i < cols.length; i++) vline(cx[i], tableTop, y, 1, '#c9c6be');
+  // 합계 줄
+  const sumRows = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
+  const sumTop = y;
+  sumRows.forEach(r => {
+    const h = 56;
+    box(cx[3], y, cols[3], h, r[2] ? '#e3e9f2' : SOFT, null);
+    font(23, 700); text(r[0], cx[3] + cols[3] / 2, y + h / 2, 'center', r[2] ? INK : SUB);
+    font(r[2] ? 27 : 25, r[2] ? 800 : 600); text(won(r[1]), cx[5] - 14, y + h / 2, 'right', r[2] ? MAIN : INK);
+    y += h; hline(cx[3], R, y, 1, '#c9c6be');
+  });
+  vline(cx[3], sumTop, y, 1, '#c9c6be'); vline(cx[4], sumTop, y, 1, '#c9c6be');
+  hline(cx[3], R, y, 2, INK);
+  hline(M, cx[3], sumTop, 2, INK);
+  y += 30;
+
+  // 안내 문구
+  if ((doc.memo || '').trim()) {
+    font(24); const ml = wrap(ctx, doc.memo.trim(), CW - 40);
+    const h = ml.length * 34 + 64;
+    box(M, y, CW, h, '#fff', LINE);
+    font(22, 700); text('안내', M + 20, y + 24, 'left', SUB);
+    font(24); ml.forEach((ln, j) => text(ln, M + 20, y + 58 + j * 34, 'left'));
+    y += h + 18;
+  }
+  // 입금 계좌
+  if (SET.account) {
+    const acc = [SET.bank, SET.account].filter(Boolean).join(' ') + (SET.holder ? `  (예금주 ${SET.holder})` : '');
+    const h = 70;
+    box(M, y, CW, h, SOFT, LINE);
+    font(22, 700); text('입금 계좌', M + 20, y + h / 2, 'left', SUB);
+    fitFont(ctx, acc, CW - 170, 26, 700); text(acc, M + 150, y + h / 2, 'left');
+    y += h + 18;
+  }
+  y += 24;
+  font(19); text(`${SET.name || ''}${SET.phone ? '  ·  ' + SET.phone : ''}`, W / 2, y, 'center', '#8a8b90');
+  return y + 44;
+}
+
+function makeImage(doc) {
+  const S = 1.5;
+  const m = document.createElement('canvas'); m.width = 10; m.height = 10;
+  const H = Math.ceil(drawDoc(m.getContext('2d'), doc, 10));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(1080 * S); cv.height = Math.round(H * S);
+  const ctx = cv.getContext('2d'); ctx.scale(S, S);
+  drawDoc(ctx, doc, H);
+  return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/png'));
+}
+
+/* ---------- 설정 ---------- */
+const SF = { sName: 'name', sOwner: 'owner', sBiz: 'biz', sPhone: 'phone', sAddr: 'addr', sKind: 'kind', sItem: 'item', sBank: 'bank', sAccount: 'account', sHolder: 'holder', sVat: 'vat', sMemoQ: 'memoQ', sMemoS: 'memoS' };
+let tmpStamp = '';
+function enterSettings() {
+  Object.entries(SF).forEach(([id, k]) => { $('#' + id).value = SET[k] || ''; $('#' + id).classList.remove('err'); });
+  tmpStamp = SET.stamp; showStamp();
+}
+function showStamp() {
+  $('#stampPrev').innerHTML = tmpStamp ? `<img src="${tmpStamp}" alt="도장">` : '도장 없음';
+  $('#stampDel').hidden = !tmpStamp;
+  $('#stampPick').textContent = tmpStamp ? '다른 사진으로 바꾸기' : '도장 사진 넣기';
+}
+$('#sPhone').addEventListener('input', e => e.target.value = fmtPhone(e.target.value));
+$('#sBiz').addEventListener('input', e => e.target.value = fmtBiz(e.target.value));
+$('#sAccount').addEventListener('input', e => e.target.value = e.target.value.replace(/[^\d-]/g, ''));
+$('#stampPick').onclick = () => $('#stampFile').click();
+$('#stampDel').onclick = () => { tmpStamp = ''; showStamp(); };
+$('#stampFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const im = new Image(), url = URL.createObjectURL(f);
+  im.onload = () => {
+    URL.revokeObjectURL(url);
+    const d = cleanStamp(im);
+    if (!d) { toast('도장을 찾지 못했습니다. 흰 종이에 찍어 다시 찍어 주세요.'); return; }
+    tmpStamp = d; showStamp();
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('사진을 열지 못했습니다.'); };
+  im.src = url;
+});
+/* 도장 사진: 흰 바탕을 지우고 도장 부분만 잘라 냄 */
+function cleanStamp(im) {
+  const sc = Math.min(1, 1600 / Math.max(im.width, im.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+  const ctx = cv.getContext('2d'); ctx.drawImage(im, 0, 0, cv.width, cv.height);
+  const d = ctx.getImageData(0, 0, cv.width, cv.height), p = d.data, W = cv.width;
+  let reds = 0;
+  for (let i = 0; i < p.length; i += 4) if (p[i] - (p[i + 1] + p[i + 2]) / 2 > 50) reds++;
+  const redMode = reds > 150;                                  // 붉은 인주 도장
+  let minX = W, minY = cv.height, maxX = -1, maxY = -1;
+  for (let i = 0; i < p.length; i += 4) {
+    const r = p[i], g = p[i + 1], b = p[i + 2];
+    const redness = r - (g + b) / 2, lum = 0.3 * r + 0.59 * g + 0.11 * b;
+    let a = 0;
+    if (redMode) { if (redness > 35) a = Math.min(255, (redness - 35) * 4 + 110); }
+    else if (lum < 110) a = Math.min(255, (110 - lum) * 3);   // 검은 도장
+    p[i + 3] = a;
+    if (a > 100) { const x = (i / 4) % W, y = (i / 4 - x) / W; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  }
+  if (maxX < 0) return '';
+  ctx.putImageData(d, 0, 0);
+  const pad = 6; minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad); maxX = Math.min(W - 1, maxX + pad); maxY = Math.min(cv.height - 1, maxY + pad);
+  const bw = maxX - minX + 1, bh = maxY - minY + 1, os = Math.min(1, 400 / Math.max(bw, bh));
+  const out = document.createElement('canvas'); out.width = Math.round(bw * os); out.height = Math.round(bh * os);
+  const octx = out.getContext('2d'); octx.imageSmoothingQuality = 'high';
+  octx.drawImage(cv, minX, minY, bw, bh, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+$('#saveSet').onclick = () => {
+  const n = $('#sName');
+  if (!n.value.trim()) { n.classList.add('err'); n.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('상호(가게 이름)는 꼭 적어 주세요.'); return; }
+  const next = Object.assign({}, SET);
+  Object.entries(SF).forEach(([id, k]) => next[k] = $('#' + id).value.trim());
+  next.stamp = tmpStamp;
+  if (!LS.set('settings', next)) return;
+  SET = next; stampImg = null;
+  toast('저장했습니다.'); back();
+};
+$('#sName').addEventListener('input', e => e.target.classList.remove('err'));
+
+/* ---------- 시작 ---------- */
+if (new URLSearchParams(location.search).has('demo')) {   // 화면 점검용 예시 데이터
+  SET = Object.assign({}, DEFAULT_SET, { name: '행복인테리어', owner: '홍길동', biz: '123-45-67890', phone: '010-1234-5678', addr: '경기도 수원시 팔달구 행궁로 123, 2층', bank: '농협', account: '351-1234-5678-93', holder: '홍길동' });
+  cur = { id: 'demo', type: 'quote', customer: '김철수', date: '2026-11-24', vat: 'add', memo: '견적 유효기간: 발행일로부터 30일\n자재는 동급 이상으로 시공합니다.',
+    items: [{ name: '거실 도배 (실크벽지)', qty: '1', price: '850,000' }, { name: '안방 장판 교체', qty: '12.5', price: '38,000' }, { name: '걸레받이 몰딩', qty: '20', price: '4,500' }, { name: '폐자재 처리비', qty: '1', price: '120,000' }] };
+  DOCS = [Object.assign({}, cur, { id: 'd1' }), Object.assign({}, cur, { id: 'd2', type: 'stmt', customer: '행복식당', date: '2026-11-20', vat: 'incl' })];
+}
+if (new URLSearchParams(location.search).get('demo') === '2') {
+  const c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d');
+  x.fillStyle = '#f4f1ea'; x.fillRect(0, 0, 200, 200); x.strokeStyle = '#c8281e'; x.lineWidth = 10; x.beginPath(); x.arc(100, 100, 70, 0, 7); x.stroke();
+  x.fillStyle = '#c8281e'; x.font = '800 44px sans-serif'; x.textAlign = 'center'; x.fillText('홍길', 100, 95); x.fillText('동인', 100, 140);
+  const im = new Image(); im.src = c.toDataURL(); im.onload = () => { SET.stamp = cleanStamp(im); render(); };
+  cur.type = 'stmt'; cur.vat = 'none'; cur.memo = ''; cur.customer = '주식회사 대한민국종합건설산업개발 현장사무소 담당자님';
+  cur.items.push({ name: '욕실 타일 전면 교체 및 방수 공사 (벽·바닥 포함, 자재비와 인건비 일체)', qty: '1', price: '3,250,000' });
+}
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+render();
+</script>
+</body>
+</html>

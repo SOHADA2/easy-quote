@@ -1,0 +1,22 @@
+{
+  "id": "daesung",
+  "appName": "대성 인테리어",
+  "shortName": "대성 견적서",
+  "iconText": "대성",
+  "settings": {
+    "name": "대성인테리어설비",
+    "owner": "소병곤",
+    "biz": "105-12-52179",
+    "addr": "서울특별시 마포구 성암로11길 9, 1층 좌측(중동)",
+    "kind": "건설업",
+    "item": "난방시공, 설비, 인테리어",
+    "phone": "",
+    "bank": "",
+    "account": "",
+    "holder": "",
+    "vat": "add",
+    "memoQ": "견적 유효기간: 발행일로부터 30일",
+    "memoS": ""
+  },
+  "items": []
+}
