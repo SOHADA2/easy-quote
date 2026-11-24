@@ -1033,7 +1033,7 @@ function fitFont(ctx, text, maxW, size, weight) {
 
 // 문서 논리 폭: 글자 크기는 그대로 두고 종이를 넓혀 A4 문서 비율로 보이게 함(1080이면 글자가 너무 커 보였음)
 const DOC_W = 1400;
-const docW = doc => doc.type === 'receipt' ? 1120 : DOC_W;   // 영수증은 좁은 세로형 종이
+const docW = doc => doc.type === 'receipt' ? 860 : DOC_W;   // 영수증은 카드 영수증처럼 좁은 종이
 function drawDoc(ctx, doc, H) {
   const W = docW(doc), M = 68, R = W - M, CW = W - 2 * M;
   const t = TYPES[doc.type], c = calc(doc);
@@ -1116,6 +1116,8 @@ function drawDoc(ctx, doc, H) {
     return y + 44;
   };
 
+  if (doc.type === 'receipt') return drawReceipt();   // 영수증은 제목부터 따로 그림
+
   // 제목
   let y = 64;
   font(60, 800); text(t.title, W / 2, y + 30, 'center');
@@ -1148,76 +1150,104 @@ function drawDoc(ctx, doc, H) {
     return y;
   };
 
-  /* ===== 영수증 (세로형: 받는 분 → 금액 → 영수 문구 → 내역 → 결제 방법·비고 → 날짜 → 공급자·도장) ===== */
-  function drawReceipt(y) {
+  /* ===== 영수증 (카드 영수증 모양: 톱니 모양 위아래 · 점선 구분 · 오른쪽 정렬 금액) ===== */
+  function drawReceipt() {
+    const PX0 = 26, PX1 = W - 26, L = PX0 + 48, RR = PX1 - 48, IW = RR - L, TEETH = 18, TD = 9;
     const isB = doc.ck === 'b', cb = doc.cb || {}, cust = (doc.customer || '').trim();
-    // 받는 분
-    let cs = 40; font(cs, 800); let cl = wrap(ctx, cust, CW - 110);
-    if (cl.length > 1) { cs = 32; font(cs, 800); cl = wrap(ctx, cust, CW - 90); }
-    cl.forEach((ln, i) => {
-      const yy = y + 24 + i * (cs + 12);
-      text(ln, M + 6, yy, 'left');
-      if (i === cl.length - 1) { const w = ctx.measureText(ln).width; font(cs - 12, 600); text(isB ? '귀중' : '귀하', M + 6 + w + 14, yy + 3, 'left', SUB); font(cs, 800); }
-    });
-    y += cl.length * (cs + 12) + 14;
-    hline(M, R, y, 2.5, INK);
-    if (isB && (cb.biz || cb.owner)) {
-      font(21); text([cb.biz ? '등록번호 ' + cb.biz : '', cb.owner ? '대표 ' + cb.owner : ''].filter(Boolean).join('   ·   '), M + 6, y + 26, 'left', SUB);
-      y += 40;
-    }
-    y += 34;
+    // 바탕 + 종이(위아래 톱니)
+    ctx.fillStyle = '#e8e6e1'; ctx.fillRect(0, 0, W, H);
+    const top = 22, bot = H - 22;
+    const paper = (dx, dy, fill) => {
+      ctx.beginPath(); ctx.moveTo(PX0 + dx, top + TD + dy);
+      for (let x = PX0; x < PX1; x += TEETH) { ctx.lineTo(Math.min(x + TEETH / 2, PX1) + dx, top + dy); ctx.lineTo(Math.min(x + TEETH, PX1) + dx, top + TD + dy); }
+      ctx.lineTo(PX1 + dx, bot - TD + dy);
+      for (let x = PX1; x > PX0; x -= TEETH) { ctx.lineTo(Math.max(x - TEETH / 2, PX0) + dx, bot + dy); ctx.lineTo(Math.max(x - TEETH, PX0) + dx, bot - TD + dy); }
+      ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+    };
+    paper(0, 4, 'rgba(0,0,0,.10)'); paper(0, 0, '#fff');
+    const dash = (y, w = 1.6) => { ctx.save(); ctx.setLineDash([7, 6]); hline(L, RR, y, w, '#8f8c85'); ctx.restore(); };
+    const solid = (y, w = 2) => hline(L, RR, y, w, INK);
+    const row = (y, l, v, o = {}) => {       // 왼쪽 이름 · 오른쪽 값
+      font(o.ls || 23, o.lw || 400); text(l, L, y + 16, 'left', o.lc || SUB);
+      font(o.vs || 24, o.vw || 600); fitFont(ctx, v, IW - 170, o.vs || 24, o.vw || 600); text(v, RR, y + 16, 'right', o.vc || INK);
+      return y + (o.h || 42);
+    };
+    let y = 74;
 
-    // 금액
-    const AH = doc.vat === 'none' ? 186 : 214, words = wonWords(c.total), nums = '₩' + won(c.total);
-    box(M, y, CW, AH, SOFT, INK, 2);
-    font(23, 700); text('영 수 금 액', W / 2, y + 38, 'center', SUB);
-    fitFont(ctx, words, CW - 80, 34, 800); text(words, W / 2, y + 92, 'center');
-    fitFont(ctx, nums, CW - 80, 48, 800); text(nums, W / 2, y + 148, 'center', MAIN);
-    if (doc.vat !== 'none') { font(20); text('(부가세 포함)', W / 2, y + 190, 'center', SUB); }
-    y += AH + 40;
-    font(29, 800); text('위 금액을 정히 영수합니다.', W / 2, y + 18, 'center');
-    y += 78;
+    // 가게 정보
+    fitFont(ctx, SET.name || '', IW, 36, 800); text(SET.name || '', W / 2, y + 18, 'center'); y += 58;
+    font(21);
+    const info1 = [SET.biz ? '사업자번호 ' + SET.biz : '', SET.owner ? '대표 ' + SET.owner : ''].filter(Boolean).join('   |   ');
+    if (info1) { text(info1, W / 2, y + 12, 'center', SUB); y += 34; }
+    if (SET.addr) { font(21); wrap(ctx, SET.addr, IW).forEach(ln => { text(ln, W / 2, y + 12, 'center', SUB); y += 32; }); }
+    if (SET.phone) { font(21); text('TEL ' + SET.phone, W / 2, y + 12, 'center', SUB); y += 34; }
+    y += 14; solid(y, 2.5); solid(y + 6, 1);
+    y += 30;
+
+    // 제목
+    font(44, 800); text('영  수  증', W / 2, y + 24, 'center'); y += 58;
+    font(20); text('( 고 객 용 )', W / 2, y + 10, 'center', SUB); y += 40;
+    dash(y); y += 22;
+
+    // 영수 정보
+    const no = (doc.date || '').replace(/-/g, '') + '-' + String(doc.id || '').slice(-4).toUpperCase();
+    y = row(y, '영수일자', dateKo(doc.date));
+    y = row(y, '영수번호', no, { vw: 400, vs: 22 });
+    y = row(y, isB ? '상    호' : '고 객 명', cust + (isB ? ' 귀중' : ' 귀하'), { vw: 700 });
+    if (isB && cb.biz) y = row(y, '등록번호', cb.biz, { vw: 400 });
+    y += 6; dash(y); y += 18;
 
     // 내역
-    font(24, 800); text('내  역', M + 4, y + 16, 'left'); y += 42;
-    y = itemsTable(y) + 30;
-    const info = [['결제 방법', doc.method || '계좌이체']];
-    if ((doc.memo || '').trim()) info.push(['비  고', doc.memo.trim()]);
-    y = kv(y, info.map(r => [r]), 170) + 44;
-
-    // 날짜
-    font(30, 800); text(dateKo(doc.date), W / 2, y + 20, 'center'); y += 76;
-
-    // 공급자(영수인) 표 + 도장
-    const VC = 46, LC = 150, VX = M + VC + LC, VW = R - VX;
-    const rows = [['상  호', SET.name || '', 1]];
-    if (SET.owner) rows.push(['대 표 자', SET.owner, 'owner']);
-    if (SET.biz) rows.push(['등록번호', SET.biz]);
-    if (SET.addr) rows.push(['주  소', SET.addr]);
-    if (SET.phone) rows.push(['연 락 처', SET.phone]);
-    font(24);
-    const rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 140); return Math.max(56, r.lines.length * 32 + 24); });
-    const tH = rh.reduce((a, b) => a + b, 0);
-    box(M, y, VC, tH, SOFT, null); box(M + VC, y, LC, tH, SOFT, null); box(M, y, CW, tH, null, INK, 2);
-    vline(M + VC, y, y + tH); vline(VX, y, y + tH);
-    font(23, 700);
-    ['공', '급', '자'].forEach((ch, i) => text(ch, M + VC / 2, y + tH / 2 + (i - 1) * Math.min(38, tH / 3.4), 'center'));
-    let ry = y, stampRow = null;
-    rows.forEach((r, i) => {
-      if (i) hline(M + VC, R, ry);
-      font(22, 700); text(r[0], M + VC + LC / 2, ry + rh[i] / 2, 'center', SUB);
-      font(24, r[2] ? 700 : 400);
-      r.lines.forEach((ln, j) => text(ln, VX + 16, ry + rh[i] / 2 + (j - (r.lines.length - 1) / 2) * 32, 'left'));
-      if (r[2] === 'owner' || (!SET.owner && r[2] === 1)) stampRow = { y: ry, h: rh[i], w: ctx.measureText(r.lines[r.lines.length - 1]).width };
-      ry += rh[i];
+    font(20, 700); text('품  명', L, y + 12, 'left', SUB); text('수량', RR - 230, y + 12, 'center', SUB); text('금  액', RR, y + 12, 'right', SUB);
+    y += 34; dash(y, 1); y += 16;
+    doc.items.forEach(it => {
+      const q = num(it.qty), amt = Math.round(q * num(it.price));
+      font(24, 600); const ls = wrap(ctx, it.name, IW - 300);
+      ls.forEach((ln, j) => { text(ln, L, y + 16 + j * 32, 'left'); });
+      font(23); text(q % 1 ? String(q) : q.toLocaleString('ko-KR'), RR - 230, y + 16, 'center');
+      font(24, 700); text(won(amt), RR, y + 16, 'right');
+      y += ls.length * 32 + 4;
+      font(19); text(`@ ${won(num(it.price))}`, L, y + 10, 'left', '#8a8b90');
+      y += 34;
     });
-    if (stampRow) {
-      const mx = VX + 16 + stampRow.w + 56;
-      font(22); text('(인)', mx, stampRow.y + stampRow.h / 2, 'center', '#9a9a9a');
-      if (stampImg) fitImg(stampImg, mx, stampRow.y + stampRow.h / 2, 88, 88, 'center', 0.92);
+    dash(y); y += 18;
+
+    // 금액
+    if (doc.vat !== 'none') {
+      y = row(y, '공급가액', won(c.supply) + '원', { vw: 500 });
+      y = row(y, '부 가 세', won(c.vat) + '원', { vw: 500 });
+      y += 4;
     }
-    y += tH + 10;
-    return footer(y);
+    solid(y, 2); y += 18;
+    font(30, 800); text('합계 금액', L, y + 22, 'left');
+    fitFont(ctx, won(c.total) + '원', IW - 200, 44, 800); text(won(c.total) + '원', RR, y + 22, 'right', MAIN);
+    y += 58;
+    fitFont(ctx, '(' + wonWords(c.total) + ')', IW, 21, 400); text('(' + wonWords(c.total) + ')', RR, y + 10, 'right', SUB);
+    y += 38; solid(y, 2); y += 18;
+
+    // 결제 · 비고
+    y = row(y, '결제 방법', doc.method || '계좌이체', { vw: 700 });
+    if ((doc.memo || '').trim()) {
+      font(23); text('비    고', L, y + 16, 'left', SUB);
+      font(23); const ml = wrap(ctx, doc.memo.trim(), IW - 170);
+      ml.forEach((ln, j) => text(ln, RR, y + 16 + j * 32, 'right'));
+      y += ml.length * 32 + 12;
+    }
+    y += 4; dash(y); y += 34;
+
+    // 영수 문구 + 영수인 도장
+    font(26, 700); text('위 금액을 정히 영수합니다.', W / 2, y + 14, 'center'); y += 62;
+    const signer = [SET.name, SET.owner ? '대표 ' + SET.owner : ''].filter(Boolean).join('  ');
+    font(24, 700); const sw = ctx.measureText(signer).width;
+    font(22); const iw = ctx.measureText('(인)').width;
+    const G = 44, sx = W / 2 - (sw + G + iw) / 2;   // 이름과 (인) 사이를 띄워 도장이 이름을 덮지 않게
+    font(24, 700); text(signer, sx, y + 16, 'left');
+    font(22); text('(인)', sx + sw + G, y + 16, 'left', '#9a9a9a');
+    if (stampImg) fitImg(stampImg, sx + sw + G + iw / 2, y + 16, 80, 80, 'center', 0.92);
+    y += 62; dash(y); y += 30;
+    font(20); text('이용해 주셔서 감사합니다.', W / 2, y + 10, 'center', SUB);
+    y += 58;
+    return y + TD + 22;
   }
 
   function drawReport(y) {
@@ -1461,7 +1491,6 @@ function drawDoc(ctx, doc, H) {
 
   /* ===== 기술소견서 ===== */
   if (doc.type === 'report') return drawReport(y);
-  if (doc.type === 'receipt') return drawReceipt(y);
 
   /* ===== 견적서 · 거래명세서 · 영수증 ===== */
   const isQ = doc.type === 'quote', isRc = doc.type === 'receipt';
