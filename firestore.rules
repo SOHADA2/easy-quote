@@ -1,0 +1,9 @@
+rules_version = '2';
+// 각 업체 계정은 자기 칸(users/{uid}/...)만 읽고 쓸 수 있음. 그 밖은 전부 막음.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{rest=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

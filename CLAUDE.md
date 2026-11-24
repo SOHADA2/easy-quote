@@ -3,7 +3,7 @@
 휴대폰 웹앱. 사업자가 견적서·거래명세서·영수증(업체판은 계약서·기술소견서도)을 써서 **사진(PNG)으로 카카오톡에 공유**한다. 나이 있는 사업자가 쓰므로 큰 글씨·큰 버튼·적은 단계가 최우선.
 
 - 라이브: https://sohada2.github.io/easy-quote/ (main 푸시 → GitHub Pages 자동 반영)
-- 서버 없음. 사업장 정보·기록은 휴대폰 localStorage(`eq_settings`, `eq_docs`, `eq_cur`)에만 저장.
+- 기본 앱은 서버 없음. 사업장 정보·기록은 휴대폰 localStorage(`eq_settings`, `eq_docs`, `eq_cur`)에 저장. 업체 전용판에 `cloud` 설정이 있으면 아래 「인터넷 저장」도 씀.
 - 파일: `index.html`(전부 인라인) · `sw.js`(네트워크 우선 + 오프라인 캐시, 파일 추가 시 FILES/CACHE 갱신) · `manifest.webmanifest` · 아이콘(`tools/icon.html`을 Edge 헤드리스로 찍어 생성)
 - 아이폰: 캔버스 넓이 한도(~1,670만 px) 때문에 `makeImage()`가 1,500만 px 넘으면 배율을 줄임(계약서 보통 1680×5400≈910만). iOS 사파리는 7일 안 쓰면 localStorage를 지울 수 있어 **홈 화면에 추가** 권장(홈 화면 앱은 예외).
 - 문서 그림: `drawDoc()`이 캔버스에 직접 그림(논리폭 `DOC_W`=1400, 사진 가로 1680px). 1080일 때 글자가 너무 커서 비전문적으로 보인다는 의견(2026-11-24)으로 종이를 넓힘 — 글자 크기를 줄이고 싶으면 숫자를 하나하나 바꾸지 말고 DOC_W를 키울 것. 합계 줄은 `sumLine()` 공용(견적서·계약서). 1회차는 높이 측정, 2회차 실제 그리기.
@@ -14,6 +14,13 @@
 - 견적서·명세서 디자인(2026-11-24 개편): 받는 분 표(일자·수신·「아래와 같이…」)와 공급자 표를 같은 높이로, 합계금액 띠는 한글 금액 왼쪽·숫자 오른쪽, 품목 표는 최소 6줄 + 「- 이하 여백 -」, 공급가액·부가세·합계는 표 아래 한 줄, 안내·입금 계좌는 한 표.
 - 점검: `index.html?demo`(견적서 예시), `?demo=2`(거래명세서·부가세 없음·긴 이름·도장). 휴대폰 폭 화면은 `tools/phone-*.html`(390px iframe)을 Edge 헤드리스로 찍기(헤드리스는 창 최소폭 ~500px이라 직접 찍으면 잘림).
 - 문구는 「~합니다」 존댓말, 장식 이모지·그라데이션 금지.
+
+## 인터넷 저장 (2026-11-24, 대성 판)
+- Firebase 프로젝트 **`easy-quote-sohada`**(이 앱 전용, 다른 앱과 분리 · 손님 개인정보가 들어가서). Firestore 서울(asia-northeast3) · 무료 요금제. 저장소 루트 `firebase.json`·`firestore.rules`·`.firebaserc`(규칙 배포: `firebase deploy --only firestore:rules`, 로그인 방식 배포: `--only auth`).
+- 로그인 = 이메일/비밀번호. 이메일은 업체별 고정(shops json `cloud.email`, 대성 = `daesung@easy-quote-sohada.firebaseapp.com`, 실제 메일 아님) → 화면에는 **비밀번호만** 받음. 처음엔 「비밀번호 한 번 더」까지 넣으면 계정을 만들고, 다음부터는 비밀번호만. **비밀번호는 사장님이 휴대폰에서 직접 정함(개발자도 모름)**. 잊었을 때는 콘솔 Authentication에서 비밀번호 재설정/계정 삭제 후 다시 만들기.
+- 데이터: `users/{uid}/docs/{문서id}`(사진 뺀 문서, 지우면 `{deleted:true}` 표시) · `users/{uid}/photos/{문서id}_{0~3}`(소견서 사진) · `users/{uid}/meta/settings`(내 정보, savedAt). 규칙은 자기 uid 칸만 읽기·쓰기.
+- 앱: 맨 아래 `<script type="module">`이 gstatic Firebase 10.12.2를 불러 `window.CLOUD`를 만들고 `cloud` 이벤트를 쏨 → 본 스크립트 `cloudSync()`가 휴대폰 기록과 합침(savedAt 새 쪽 우선, 휴대폰에만 있는 건 올림). 저장 지점: 미리 보기 전 저장(`cloudSaveDoc`·`cloudSavePhotos`), 기록 지우기, 내 정보 저장. 소견서를 기록에서 열면 사진을 인터넷에서 다시 받아옴. 오프라인이면 Firestore가 모아 뒀다가 연결될 때 보냄. Firebase를 못 불러와도 앱은 휴대폰 저장만으로 동작.
+- 점검: 헤드리스 `--virtual-time-budget`에선 Firebase 로그인이 안 끝남 → 스크래치패드의 `cdp.cjs`(실제 시간으로 헤드리스 Edge를 돌리며 title 감시) + 로컬 http 서버로 확인. **실제 대성 계정 말고 `selftest-…@easy-quote-sohada.firebaseapp.com` 같은 임시 계정으로 시험하고 끝에 데이터·계정 지울 것.**
 
 ## 업체 전용판 (shops)
 - `shops/<id>.json`(상호·대표·등록번호 등 기본 정보 + 자주 쓰는 품목 `items:[{name,price}]`) → `node tools/build.mjs` → `<id>/` 폴더(index.html·manifest·sw.js) 생성 → 주소 `sohada2.github.io/easy-quote/<id>/`.

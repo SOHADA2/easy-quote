@@ -33,5 +33,12 @@
     "receipt",
     "contract",
     "report"
-  ]
+  ],
+  "cloud": {
+    "apiKey": "AIzaSyC2Ccu5pDCwgzP5FzxfGqfQwLelNxKXxLY",
+    "authDomain": "easy-quote-sohada.firebaseapp.com",
+    "projectId": "easy-quote-sohada",
+    "appId": "1:81927303217:web:7cf8291a968ea293202510",
+    "email": "daesung@easy-quote-sohada.firebaseapp.com"
+  }
 }

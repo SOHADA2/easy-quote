@@ -79,6 +79,10 @@ textarea.t{min-height:96px;resize:vertical}
 .help li{margin:8px 0}
 .help .btn{margin-top:10px}
 .help .why{color:var(--sub);font-size:.8rem;margin:14px 0 0}
+.help .msg{color:var(--danger);font-weight:700;margin:8px 0 0;min-height:1.2em}
+.sec-title small{font-size:.8rem;font-weight:400;color:var(--ok);margin-left:6px}
+.showpw{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:.95rem;color:var(--sub)}
+.showpw input{width:22px;height:22px}
 .notice p{margin:0 0 12px;font-weight:600}
 .sec-title{font-size:1.05rem;font-weight:700;margin:26px 0 10px}
 .hist{list-style:none;margin:0;padding:0}
@@ -191,7 +195,12 @@ textarea.t{min-height:96px;resize:vertical}
 
     <div id="newBtns"></div>
 
-    <div class="sec-title">작성한 기록</div>
+    <div class="notice" id="cloudNotice" hidden>
+      <p>기록을 인터넷에 안전하게 보관하려면, 이 휴대폰에서 처음 한 번만 비밀번호를 넣어 주세요.</p>
+      <button class="btn" id="cloudNoticeBtn">인터넷 저장 켜기</button>
+    </div>
+
+    <div class="sec-title">작성한 기록 <small id="cloudNote"></small></div>
     <ul class="hist" id="histList"></ul>
     <p class="foot">휴대폰 브라우저 메뉴에서 「홈 화면에 추가」를 누르면 앱처럼 바로 열 수 있습니다.</p>
   </section>
@@ -283,7 +292,7 @@ textarea.t{min-height:96px;resize:vertical}
       <div class="photos" id="rpPhotos"></div>
       <button class="btn line" id="rpAdd">사진 넣기</button>
       <input type="file" id="rpFile" accept="image/*" multiple hidden>
-      <p class="hint">사진은 휴대폰 저장 공간 때문에 「작성한 기록」에는 남지 않습니다. 기록에서 다시 열면 사진을 다시 넣어 주세요.</p>
+      <p class="hint" id="rpPhotoHint">사진은 휴대폰 저장 공간 때문에 「작성한 기록」에는 남지 않습니다. 기록에서 다시 열면 사진을 다시 넣어 주세요.</p>
     </div>
 
     <div class="card" id="itemsCard">
@@ -325,6 +334,12 @@ textarea.t{min-height:96px;resize:vertical}
 
   <!-- 설정 -->
   <section class="view" id="v-settings">
+    <div class="card" id="cloudCard" hidden>
+      <h2>인터넷 저장</h2>
+      <p id="cloudCardTxt" style="margin:0 0 12px"></p>
+      <button class="btn" id="cloudOnBtn">인터넷 저장 켜기</button>
+      <button class="btn ghost" id="cloudOffBtn" hidden>이 휴대폰에서 끄기</button>
+    </div>
     <div class="card">
       <h2>사업장 정보</h2>
       <label class="f" for="sName">상호 <small>(가게·회사 이름)</small></label>
@@ -412,6 +427,21 @@ textarea.t{min-height:96px;resize:vertical}
   <button class="btn" id="saveSet">저장하기</button>
 </div></div>
 
+<div class="help" id="loginModal" hidden>
+  <div class="hb">
+    <p class="ht">인터넷 저장 켜기</p>
+    <p>이 휴대폰에서 처음 한 번만 하면 됩니다. 휴대폰을 바꾸면 같은 비밀번호를 넣으면 기록이 그대로 돌아옵니다.</p>
+    <label class="f" for="pw1">비밀번호</label>
+    <input class="t" id="pw1" type="password" autocomplete="current-password">
+    <label class="f" for="pw2">비밀번호 한 번 더 <small>(처음 만들 때만)</small></label>
+    <input class="t" id="pw2" type="password" autocomplete="new-password">
+    <label class="showpw"><input type="checkbox" id="pwShow"> 비밀번호 보이기</label>
+    <p class="msg" id="pwMsg"></p>
+    <button class="btn" id="pwGo">켜기</button>
+    <button class="btn line" id="pwClose">닫기</button>
+    <p class="why">비밀번호는 6자 이상으로, 잊지 않게 따로 적어 두세요. 전화번호나 생일처럼 남이 알기 쉬운 숫자는 피해 주세요.</p>
+  </div>
+</div>
 <div class="help" id="help" hidden>
   <div class="hb">
     <p class="ht" id="hTitle"></p>
@@ -431,7 +461,7 @@ textarea.t{min-height:96px;resize:vertical}
 
 <div class="toast" id="toast"></div>
 
-<script>window.EQ_PRESET = {"id":"daesung","appName":"대성 인테리어","contract":true,"types":["quote","receipt","contract","report"],"settings":{"name":"대성인테리어설비","owner":"소병곤","biz":"105-12-52179","addr":"서울특별시 마포구 성암로11길 9, 1층 좌측(중동)","kind":"건설업","item":"난방시공, 설비, 인테리어","phone":"010-3619-4446","bank":"국민은행","account":"496502-01-169790","holder":"소병곤","vat":"add","memoQ":"견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행하며, 비용은 따로 받습니다.\n철거 후 드러나는 기존 배관·바닥 등의 상태에 따라 추가 비용이 생길 수 있습니다.\n자재 색상·무늬는 생산 시기에 따라 견본과 조금 다를 수 있습니다.","memoS":"","memoC":"","stamp":"stamp.png"},"items":[],"old":{"memoQ":["견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행합니다.\n하자보수: 공사를 마친 날부터 1년\n진행을 원하시면 이 대화방에 「진행합니다」라고 답장해 주세요.","견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행합니다."]}};</script>
+<script>window.EQ_PRESET = {"id":"daesung","appName":"대성 인테리어","contract":true,"types":["quote","receipt","contract","report"],"cloud":{"apiKey":"AIzaSyC2Ccu5pDCwgzP5FzxfGqfQwLelNxKXxLY","authDomain":"easy-quote-sohada.firebaseapp.com","projectId":"easy-quote-sohada","appId":"1:81927303217:web:7cf8291a968ea293202510","email":"daesung@easy-quote-sohada.firebaseapp.com"},"settings":{"name":"대성인테리어설비","owner":"소병곤","biz":"105-12-52179","addr":"서울특별시 마포구 성암로11길 9, 1층 좌측(중동)","kind":"건설업","item":"난방시공, 설비, 인테리어","phone":"010-3619-4446","bank":"국민은행","account":"496502-01-169790","holder":"소병곤","vat":"add","memoQ":"견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행하며, 비용은 따로 받습니다.\n철거 후 드러나는 기존 배관·바닥 등의 상태에 따라 추가 비용이 생길 수 있습니다.\n자재 색상·무늬는 생산 시기에 따라 견본과 조금 다를 수 있습니다.","memoS":"","memoC":"","stamp":"stamp.png"},"items":[],"old":{"memoQ":["견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행합니다.\n하자보수: 공사를 마친 날부터 1년\n진행을 원하시면 이 대화방에 「진행합니다」라고 답장해 주세요.","견적 유효기간: 발행일로부터 30일\n대금: 계약금 30%, 잔금은 공사가 끝나고 3일 안에\n견적에 없는 추가 공사는 미리 협의한 뒤 진행합니다."]}};</script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -607,10 +637,11 @@ $('#histList').addEventListener('click', e => {
   if (o) {
     const d = DOCS.find(x => x.id === o.dataset.id); if (!d) return;
     cur = JSON.parse(JSON.stringify(d)); LS.set('cur', cur); go('write');
+    if (cur.type === 'report') cloudLoadPhotos(cur.id);
   } else if (dl) {
     const d = DOCS.find(x => x.id === dl.dataset.del); if (!d) return;
     if (!confirm(`${d.customer || '받는 분 없음'} ${TYPES[d.type].name}를 지울까요?`)) return;
-    DOCS = DOCS.filter(x => x.id !== d.id); LS.set('docs', DOCS); enterHome(); toast('지웠습니다.');
+    DOCS = DOCS.filter(x => x.id !== d.id); LS.set('docs', DOCS); cloudRemoveDoc(d.id); enterHome(); toast('지웠습니다.');
   }
 });
 
@@ -912,6 +943,8 @@ $('#toPreview').onclick = () => {
   if (keep.rp) keep.rp.photos = [];             // 사진은 기록에 남기지 않음(저장 공간)
   DOCS = [keep, ...DOCS.filter(d => d.id !== cur.id)].slice(0, 300);
   LS.set('docs', DOCS); saveCur();
+  cloudSaveDoc(keep);
+  if (cur.type === 'report' && cur.rp) cloudSavePhotos(cur.id, cur.rp.photos || []);
   go('preview');
 };
 
@@ -1618,12 +1651,107 @@ $('#saveSet').onclick = () => {
   if (!n.value.trim()) { n.classList.add('err'); n.scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('상호(가게 이름)는 꼭 적어 주세요.'); return; }
   const next = Object.assign({}, SET);
   Object.entries(SF).forEach(([id, k]) => next[k] = $('#' + id).value.trim());
-  next.stamp = tmpStamp; next.stampOff = !tmpStamp;
+  next.stamp = tmpStamp; next.stampOff = !tmpStamp; next.savedAt = Date.now();
   if (!LS.set('settings', next)) return;
   SET = next; stampImg = null;
+  if (cloudState === 'in') CLOUD.saveSettings(next).catch(e => console.warn(e));
   toast('저장했습니다.'); back();
 };
 $('#sName').addEventListener('input', e => e.target.classList.remove('err'));
+
+/* ---------- 인터넷 저장 (업체 전용판 cloud 설정이 있을 때만) ----------
+   window.CLOUD = 아래 module 스크립트가 Firebase를 불러와 만듦. 문서는 users/{uid}/docs, 사진은 photos, 내 정보는 meta/settings.
+   지운 문서는 {deleted:true} 표시로 남겨서 다른 휴대폰에서도 지워지게 함. 휴대폰 기록과 합칠 때는 savedAt이 새 쪽이 이김. */
+const HAS_CLOUD = !!PRESET.cloud;
+let cloudState = HAS_CLOUD ? 'wait' : 'off';
+function renderCloud() {
+  const on = cloudState === 'in', out = cloudState === 'out' || cloudState === 'fail';
+  $('#cloudNotice').hidden = !(cloudState === 'out');
+  $('#cloudNote').textContent = on ? '· 인터넷에 자동 저장됨' : '';
+  $('#cloudCard').hidden = !HAS_CLOUD;
+  $('#cloudCardTxt').textContent = on ? '이 휴대폰의 기록이 인터넷에 자동으로 저장되고 있습니다.'
+    : cloudState === 'fail' ? '인터넷 연결을 확인한 뒤 앱을 다시 열어 주세요.'
+    : cloudState === 'wait' ? '확인 중입니다…' : '아직 켜지 않았습니다. 켜 두면 휴대폰을 바꿔도 기록이 남습니다.';
+  $('#cloudOnBtn').hidden = !out; $('#cloudOffBtn').hidden = !on;
+  $('#rpPhotoHint').textContent = on ? '현장 사진도 인터넷에 함께 보관됩니다.' : '사진은 휴대폰 저장 공간 때문에 「작성한 기록」에는 남지 않습니다. 인터넷 저장을 켜면 사진도 보관됩니다.';
+}
+window.addEventListener('cloud', () => {
+  cloudState = window.CLOUD.state; renderCloud();
+  if (cloudState === 'in') cloudSync();
+});
+async function cloudSync() {
+  try {
+    // 문서: 양쪽을 합쳐 새 쪽을 남김
+    const remote = await CLOUD.fetchAll();
+    const map = new Map(remote.map(d => [d.id, d]));
+    for (const d of DOCS) {
+      const r = map.get(d.id);
+      if (!r || (d.savedAt || 0) > (r.savedAt || 0)) { CLOUD.saveDoc(d).catch(e => console.warn(e)); map.set(d.id, d); }
+    }
+    DOCS = [...map.values()].filter(d => !d.deleted && TYPES[d.type])
+      .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)).slice(0, 300);
+    LS.set('docs', DOCS);
+    // 내 정보
+    const rs = await CLOUD.getSettings(), ls = LS.get('settings', null);
+    if (rs && (!ls || (rs.savedAt || 0) > (ls.savedAt || 0))) {
+      LS.set('settings', rs); SET = Object.assign({}, DEFAULT_SET, PRESET.settings || {}, rs); stampImg = null;
+    } else if (ls && ls.savedAt && (!rs || ls.savedAt > (rs.savedAt || 0))) {
+      CLOUD.saveSettings(ls).catch(e => console.warn(e));
+    }
+    if ((location.hash.slice(1) || 'home') === 'home') enterHome();
+  } catch (e) { console.warn('cloud sync', e); }
+}
+function cloudSaveDoc(d) { if (cloudState === 'in') CLOUD.saveDoc(d).catch(e => console.warn(e)); }
+function cloudRemoveDoc(id) { if (cloudState === 'in') CLOUD.removeDoc(id).catch(e => console.warn(e)); }
+function cloudSavePhotos(id, list) { if (cloudState === 'in') CLOUD.savePhotos(id, list).catch(e => console.warn(e)); }
+async function cloudLoadPhotos(id) {
+  if (cloudState !== 'in') return;
+  try {
+    const list = await CLOUD.loadPhotos(id);
+    if (list.length && cur && cur.id === id && cur.rp && !(cur.rp.photos || []).length) {
+      cur.rp.photos = list; saveCur(); if (location.hash === '#write') renderPhotos();
+    }
+  } catch (e) { console.warn(e); }
+}
+// 로그인 창
+function openLogin() {
+  $('#pw1').value = ''; $('#pw2').value = ''; $('#pwMsg').textContent = ''; $('#pwShow').checked = false;
+  $('#pw1').type = $('#pw2').type = 'password';
+  $('#loginModal').hidden = false;
+}
+$('#cloudNoticeBtn').onclick = openLogin;
+$('#cloudOnBtn').onclick = openLogin;
+$('#pwClose').onclick = () => { $('#loginModal').hidden = true; };
+$('#pwShow').onchange = e => { $('#pw1').type = $('#pw2').type = e.target.checked ? 'text' : 'password'; };
+$('#cloudOffBtn').onclick = async () => {
+  if (!confirm('이 휴대폰에서 인터넷 저장을 끌까요?\n(인터넷에 저장된 기록은 지워지지 않습니다. 다시 켜려면 비밀번호가 필요합니다.)')) return;
+  await CLOUD.logout(); toast('인터넷 저장을 껐습니다.');
+};
+$('#pwGo').onclick = async () => {
+  const p1 = $('#pw1').value, p2 = $('#pw2').value, msg = $('#pwMsg');
+  if (!window.CLOUD || !CLOUD.login) { msg.textContent = '인터넷 연결을 확인해 주세요.'; return; }
+  if (p1.length < 6) { msg.textContent = '비밀번호는 6자 이상으로 넣어 주세요.'; return; }
+  msg.textContent = ''; $('#pwGo').disabled = true;
+  try {
+    await CLOUD.login(p1);
+    $('#loginModal').hidden = true; toast('인터넷 저장을 켰습니다.');
+  } catch (e) {
+    const code = e.code || '';
+    if (code === 'auth/too-many-requests') msg.textContent = '여러 번 틀려서 잠시 막혔습니다. 잠시 뒤에 다시 해 주세요.';
+    else if (code === 'auth/network-request-failed') msg.textContent = '인터넷 연결을 확인해 주세요.';
+    else if (!p2) msg.textContent = '비밀번호가 맞지 않습니다. 처음 켜는 거라면 아래 칸에 한 번 더 적어 주세요.';
+    else if (p1 !== p2) msg.textContent = '두 칸의 비밀번호가 서로 다릅니다.';
+    else {
+      try { await CLOUD.create(p1); $('#loginModal').hidden = true; toast('비밀번호를 만들고 인터넷 저장을 켰습니다.'); }
+      catch (e2) {
+        msg.textContent = e2.code === 'auth/email-already-in-use' ? '이미 만든 비밀번호가 있습니다. 그 비밀번호를 넣어 주세요.'
+          : e2.code === 'auth/weak-password' ? '비밀번호를 더 길게 만들어 주세요.' : '켜지 못했습니다. 잠시 뒤 다시 해 주세요.';
+      }
+    }
+  }
+  $('#pwGo').disabled = false;
+};
+renderCloud();
 
 /* ---------- 시작 ---------- */
 if (new URLSearchParams(location.search).has('demo')) {   // 화면 점검용 예시 데이터
@@ -1665,6 +1793,40 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
   }
 }
 render();
+</script>
+<script type="module">
+// 인터넷 저장: 업체 전용판(EQ_PRESET.cloud)에서만 Firebase를 불러옴. 실패해도 앱은 휴대폰 저장만으로 계속 동작.
+const P = window.EQ_PRESET || {};
+if (P.cloud) {
+  const B = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const fire = (state) => { window.CLOUD.state = state; window.dispatchEvent(new Event('cloud')); };
+  try {
+    const [{ initializeApp }, A, F] = await Promise.all([import(B + 'firebase-app.js'), import(B + 'firebase-auth.js'), import(B + 'firebase-firestore.js')]);
+    const cfg = P.cloud, app = initializeApp(cfg), auth = A.getAuth(app);
+    let db;
+    try { db = F.initializeFirestore(app, { localCache: F.persistentLocalCache() }); } catch (e) { db = F.getFirestore(app); }
+    let uid = null;
+    const clean = o => JSON.parse(JSON.stringify(o));
+    const ref = (...p) => F.doc(db, 'users', uid, ...p);
+    window.CLOUD = {
+      state: 'wait',
+      login: pw => A.signInWithEmailAndPassword(auth, cfg.email, pw),
+      create: pw => A.createUserWithEmailAndPassword(auth, cfg.email, pw),
+      logout: () => A.signOut(auth),
+      fetchAll: async () => (await F.getDocs(F.collection(db, 'users', uid, 'docs'))).docs.map(d => d.data()),
+      saveDoc: d => F.setDoc(ref('docs', d.id), clean(d)),
+      removeDoc: id => F.setDoc(ref('docs', id), { id, deleted: true, savedAt: Date.now() }),
+      savePhotos: (id, list) => Promise.all([0, 1, 2, 3].map(i => list[i] ? F.setDoc(ref('photos', id + '_' + i), { d: list[i] }) : F.deleteDoc(ref('photos', id + '_' + i)))),
+      loadPhotos: async id => (await Promise.all([0, 1, 2, 3].map(i => F.getDoc(ref('photos', id + '_' + i))))).filter(s => s.exists()).map(s => s.data().d),
+      getSettings: async () => { const s = await F.getDoc(ref('meta', 'settings')); return s.exists() ? s.data() : null; },
+      saveSettings: o => F.setDoc(ref('meta', 'settings'), clean(o)),
+    };
+    A.onAuthStateChanged(auth, u => { uid = u ? u.uid : null; fire(u ? 'in' : 'out'); });
+  } catch (e) {
+    console.warn('cloud load failed', e);
+    window.CLOUD = { state: 'fail' }; window.dispatchEvent(new Event('cloud'));
+  }
+}
 </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ for (const f of fs.readdirSync(path.join(root, 'shops')).filter(f => f.endsWith(
   const dir = path.join(root, shop.id);
   fs.mkdirSync(dir, { recursive: true });
 
-  const preset = { id: shop.id, appName: shop.appName, contract: !!shop.contract, types: shop.types, settings: shop.settings, items: shop.items || [], old: shop.old || {} };
+  const preset = { id: shop.id, appName: shop.appName, contract: !!shop.contract, types: shop.types, cloud: shop.cloud, settings: shop.settings, items: shop.items || [], old: shop.old || {} };
   let html = base;
   for (const a of ['<title>간편 견적서</title>', 'content="간편 견적서">', '<h1 id="topTitle">간편 견적서</h1>']) must(html, a);
   html = html
