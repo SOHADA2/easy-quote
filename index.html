@@ -67,6 +67,16 @@ textarea.t{min-height:96px;resize:vertical}
 .big b{display:block;font-size:1.35rem;color:var(--main)}
 .big span{display:block;color:var(--sub);font-size:.92rem;margin-top:4px}
 .notice{background:#fff8dc;border:2px solid #e3c65a;border-radius:10px;padding:16px;margin-bottom:16px}
+.inapp{background:#fff8dc;border:2px solid #e3c65a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.inapp p{margin:0 0 10px;font-weight:700}
+.help{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.help .hb{background:#fff;width:100%;max-width:640px;border-radius:14px 14px 0 0;padding:22px 18px calc(env(safe-area-inset-bottom) + 18px);max-height:92vh;overflow:auto}
+.help .ht{font-size:1.2rem;font-weight:800;margin:0 0 10px}
+.help p{margin:0 0 10px}
+.help ol{margin:0 0 6px;padding-left:1.4em}
+.help li{margin:8px 0}
+.help .btn{margin-top:10px}
+.help .why{color:var(--sub);font-size:.8rem;margin:14px 0 0}
 .notice p{margin:0 0 12px;font-weight:600}
 .sec-title{font-size:1.05rem;font-weight:700;margin:26px 0 10px}
 .hist{list-style:none;margin:0;padding:0}
@@ -158,6 +168,10 @@ textarea.t{min-height:96px;resize:vertical}
 </header>
 
 <main>
+  <div class="inapp" id="inappBar" hidden>
+    <p>카카오톡 안에서 열려 있어 「카카오톡으로 보내기」가 되지 않습니다.</p>
+    <button class="btn" id="inappBtn">인터넷 앱으로 열기</button>
+  </div>
   <!-- 홈 -->
   <section class="view" id="v-home">
     <div class="notice" id="firstNotice" hidden>
@@ -338,6 +352,15 @@ textarea.t{min-height:96px;resize:vertical}
   <button class="btn" id="saveSet">저장하기</button>
 </div></div>
 
+<div class="help" id="help" hidden>
+  <div class="hb">
+    <p class="ht" id="hTitle"></p>
+    <div id="hBody"></div>
+    <button class="btn kakao" id="hMain"></button>
+    <button class="btn line" id="hClose">닫기</button>
+    <p class="why" id="hWhy"></p>
+  </div>
+</div>
 <div class="sign-modal" id="signModal" hidden>
   <div class="sm-t">아래 네모 칸에 손가락으로 서명해 주세요</div>
   <div class="sm-s">이름을 크게 써 주시면 됩니다.</div>
@@ -764,15 +787,52 @@ async function enterPreview() {
   $('#shareBtn').disabled = false;
 }
 $('#editBtn').onclick = back;
+/* 카카오톡 보내기
+   - 크롬·사파리·삼성 인터넷: 휴대폰 공유 화면(navigator.share) → 카카오톡 → 보낼 대화방 고르기
+   - 카카오톡 안 브라우저(링크를 카톡에서 누른 경우)는 공유 기능이 없음 → 인터넷 앱으로 넘겨서 엶 */
+const UA = navigator.userAgent;
+const IN_KAKAO = /KAKAOTALK/i.test(UA);
+const IN_APP = IN_KAKAO || /NAVER\(inapp|Instagram|FBAN|FBAV|DaumApps|Line\/|BAND\//i.test(UA);
+const IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+const CAN_JUMP = IN_KAKAO || !IS_IOS;      // 아이폰의 다른 앱 안 브라우저는 직접 넘길 방법이 없음
+function packDoc(d) {                      // 쓰던 문서를 주소에 담아 인터넷 앱으로 그대로 가져감
+  const c = JSON.parse(JSON.stringify(d));
+  if (c.ct && (c.ct.sign || '').length > 6000) { c.ct.sign = ''; c.ct.signKey = ''; }
+  return btoa(unescape(encodeURIComponent(JSON.stringify(c))));
+}
+function openOutside() {
+  const v = location.hash.slice(1);
+  let u = location.origin + location.pathname;
+  if (cur && (v === 'write' || v === 'preview')) u += '?doc=' + encodeURIComponent(packDoc(cur)) + '#' + v;
+  if (IN_KAKAO) location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(u);
+  else if (!IS_IOS) location.href = 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+}
+function showHelp(kind, why) {
+  const inapp = kind === 'inapp';
+  $('#hTitle').textContent = inapp ? '인터넷 앱에서 열어야 바로 보낼 수 있습니다' : '사진을 휴대폰에 저장했습니다';
+  $('#hBody').innerHTML = inapp
+    ? (CAN_JUMP
+      ? '<p>카카오톡 안에서 열린 화면에서는 바로 보내기가 되지 않습니다. 아래 버튼을 누르면 인터넷 앱(크롬·사파리)에서 지금 쓰던 문서가 그대로 열립니다.</p><p>거기서 「카카오톡으로 보내기」를 누르면 보낼 대화방을 고르는 화면이 나옵니다.</p>'
+      : '<p>화면 아래나 위의 메뉴(… 또는 공유 모양)에서 <b>「Safari로 열기」</b>를 눌러 주세요. Safari에서는 바로 보낼 수 있습니다.</p>')
+    : '<p>이 인터넷 앱에서는 바로 보내기가 되지 않아 사진으로 저장했습니다. 카카오톡에서 이렇게 보내 주세요.</p><ol><li>카카오톡에서 보낼 대화방을 엽니다.</li><li>글 쓰는 칸 왼쪽의 <b>+</b>를 누르고 <b>「앨범」</b>을 누릅니다.</li><li>맨 앞에 있는 이 사진을 골라 보냅니다.</li></ol><p>크롬(안드로이드)이나 사파리(아이폰)에서 열면 다음부터는 바로 대화방을 고를 수 있습니다.</p>';
+  const main = $('#hMain');
+  main.hidden = inapp && !CAN_JUMP;
+  main.textContent = inapp ? '인터넷 앱으로 열기' : '카카오톡 열기';
+  main.onclick = inapp ? openOutside : () => { location.href = 'kakaotalk://launch'; };
+  $('#hWhy').textContent = why ? '(확인용: ' + why + ')' : '';
+  $('#help').hidden = false;
+}
+$('#hClose').onclick = () => { $('#help').hidden = true; };
+$('#inappBtn').onclick = openOutside;
 $('#shareBtn').onclick = async () => {
   if (!shareFile) return;
+  let why = '';
   if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-    try { await navigator.share({ files: [shareFile] }); }
-    catch (e) { if (e.name !== 'AbortError') { download(); toast('사진을 저장했습니다. 카카오톡에서 사진으로 보내 주세요.'); } }
-  } else {
-    download();
-    toast('사진을 저장했습니다. 카카오톡 대화방에서 + 를 눌러 사진으로 보내 주세요.');
-  }
+    try { await navigator.share({ files: [shareFile] }); return; }
+    catch (e) { if (e.name === 'AbortError') return; why = e.name + (e.message ? ' ' + e.message : ''); }
+  } else why = !navigator.share ? '공유 기능 없음' : '사진 공유 안 됨';
+  if (IN_APP) { showHelp('inapp', why); return; }
+  download(); showHelp('saved', why);
 };
 $('#saveBtn').onclick = () => { if (shareFile) { download(); toast('사진을 저장했습니다. 저장이 안 되면 사진을 길게 눌러 주세요.'); } };
 function download() {
@@ -836,6 +896,7 @@ function drawDoc(ctx, doc, H) {
   const vatNote = doc.vat === 'none' ? '' : ' (부가세 포함)';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = MAIN; ctx.fillRect(0, 0, W, 10);
 
   // 품목 표 + 합계 줄
   const itemsTable = y => {
@@ -1009,23 +1070,10 @@ function drawDoc(ctx, doc, H) {
   }
 
   /* ===== 견적서 · 거래명세서 ===== */
-  // 왼쪽: 날짜·받는 분
-  const LW = 420;
-  let ly = y + 10;
-  font(27); text(dateKo(doc.date), M, ly + 16, 'left', SUB); ly += 56;
-  font(40, 800);
-  let custLines = wrap(ctx, (doc.customer || '').trim(), LW - 80), cs = 40;
-  if (custLines.length > 2) { cs = 32; font(cs, 800); custLines = wrap(ctx, (doc.customer || '').trim(), LW - 70); }
-  custLines.forEach((ln, i) => {
-    text(ln, M, ly + 22, 'left');
-    if (i === custLines.length - 1) { const w = ctx.measureText(ln).width; font(cs - 10, 600); text('귀하', M + w + 14, ly + 24, 'left'); font(cs, 800); }
-    ly += cs + 12;
-  });
-  hline(M, M + LW, ly + 4, 2, INK); ly += 34;
-  font(27); text(t.lead, M, ly + 14, 'left'); ly += 50;
-
-  // 오른쪽: 공급자 표
-  const TX = M + LW + 30, TW = R - TX, VC = 46, LC = 112, VX = TX + VC + LC, VW = R - VX;
+  const isQ = doc.type === 'quote';
+  // 위: 받는 분 표(왼쪽) + 공급자 표(오른쪽) — 두 표 높이를 맞춤
+  const LW = 420, GAP = 20, LBW = 112;
+  const TX = M + LW + GAP, TW = R - TX, VC = 46, LC = 112, VX = TX + VC + LC, VW = R - VX;
   const rows = [];
   if (SET.biz) rows.push(['등록번호', SET.biz]);
   rows.push(['상  호', SET.name || '']);
@@ -1034,9 +1082,36 @@ function drawDoc(ctx, doc, H) {
   if (SET.kind || SET.item) rows.push(['업태·종목', [SET.kind, SET.item].filter(Boolean).join(' / ')]);
   if (SET.phone) rows.push(['연 락 처', SET.phone]);
   font(24);
-  const rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 24); return Math.max(54, r.lines.length * 31 + 22); });
-  const tH = rh.reduce((a, b) => a + b, 0);
-  box(TX, y, VC, tH, SOFT); box(TX + VC, y, LC, tH, SOFT); box(TX, y, TW, tH, null, INK, 2);
+  let rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 24); return Math.max(54, r.lines.length * 31 + 22); });
+  const cust = (doc.customer || '').trim();
+  const custW = LW - LBW - 32 - 56;
+  let cs = 36; font(cs, 800); let cl = wrap(ctx, cust, custW);
+  if (cl.length > 2) { cs = 30; font(cs, 800); cl = wrap(ctx, cust, custW + 10); }
+  if (cl.length > 3) { cs = 26; font(cs, 800); cl = wrap(ctx, cust, custW + 16); }
+  const dH = 62, leadH = 64;
+  const rsum = rh.reduce((a, b) => a + b, 0);
+  const tH = Math.max(rsum, dH + leadH + cl.length * (cs + 10) + 44);
+  rh = rh.map(h => h + (tH - rsum) / rows.length);
+  const custH = tH - dH - leadH;
+
+  // 왼쪽 표
+  box(M, y, LBW, dH + custH, SOFT, null);
+  box(M, y, LW, tH, null, INK, 2);
+  vline(M + LBW, y, y + dH + custH); hline(M, M + LW, y + dH); hline(M, M + LW, y + dH + custH);
+  font(22, 700);
+  text(isQ ? '견적일자' : '거래일자', M + LBW / 2, y + dH / 2, 'center', SUB);
+  text(isQ ? '수  신' : '받 는 분', M + LBW / 2, y + dH + custH / 2, 'center', SUB);
+  font(25); text(dateKo(doc.date), M + LBW + 16, y + dH / 2, 'left');
+  font(cs, 800);
+  cl.forEach((ln, i) => {
+    const yy = y + dH + custH / 2 + (i - (cl.length - 1) / 2) * (cs + 10);
+    text(ln, M + LBW + 16, yy, 'left');
+    if (i === cl.length - 1) { const w = ctx.measureText(ln).width; font(Math.max(22, cs - 12), 600); text('귀하', M + LBW + 16 + w + 10, yy + 2, 'left', SUB); font(cs, 800); }
+  });
+  font(24); text(t.lead, M + LW / 2, y + dH + custH + leadH / 2, 'center', INK);
+
+  // 오른쪽 공급자 표
+  box(TX, y, VC, tH, SOFT, null); box(TX + VC, y, LC, tH, SOFT, null); box(TX, y, TW, tH, null, INK, 2);
   vline(TX + VC, y, y + tH); vline(VX, y, y + tH);
   font(24, 700);
   ['공', '급', '자'].forEach((ch, i) => text(ch, TX + VC / 2, y + tH / 2 + (i - 1) * Math.min(40, tH / 3.4), 'center'));
@@ -1044,36 +1119,89 @@ function drawDoc(ctx, doc, H) {
   rows.forEach((r, i) => {
     if (i) hline(TX + VC, R, ry);
     font(22, 700); text(r[0], TX + VC + LC / 2, ry + rh[i] / 2, 'center', SUB);
-    font(24, r[2] === 'owner' || i === (SET.biz ? 1 : 0) ? 700 : 400);
+    font(24, r[2] === 'owner' || r[0] === '상  호' ? 700 : 400);
     r.lines.forEach((ln, j) => text(ln, VX + 14, ry + rh[i] / 2 + (j - (r.lines.length - 1) / 2) * 31, 'left'));
     if (r[2] === 'owner' || (!SET.owner && r[0] === '상  호')) stampRow = { y: ry, h: rh[i], w: ctx.measureText(r.lines[r.lines.length - 1]).width };
     ry += rh[i];
   });
   if (stampImg && stampRow) {
-    const sz = 88, ar = stampImg.width / stampImg.height;
+    const sz = 84, ar = stampImg.width / stampImg.height;
     const w = ar >= 1 ? sz : sz * ar;
-    fitImg(stampImg, Math.min(R - w - 10, VX + 14 + stampRow.w + 8), stampRow.y + stampRow.h / 2, sz, sz, 'left', 0.92);
+    fitImg(stampImg, Math.min(R - w - 10, VX + 14 + stampRow.w + 10), stampRow.y + stampRow.h / 2, sz, sz, 'left', 0.92);
   }
-  y = Math.max(ly, y + tH) + 34;
+  y += tH + 24;
 
-  // 합계금액 띠
-  const BH = 118, BL = 190;
+  // 합계금액 띠: 한글 금액(왼쪽) + 숫자 금액(오른쪽)
+  const BH = 96, BL = 200;
   box(M, y, CW, BH, SOFT, INK, 2); vline(M + BL, y, y + BH, 1.5, INK);
-  font(28, 800); text('합계금액', M + BL / 2, y + BH / 2 - (doc.vat === 'none' ? 0 : 14), 'center');
-  if (doc.vat !== 'none') { font(20); text('(부가세 포함)', M + BL / 2, y + BH / 2 + 22, 'center', SUB); }
+  font(27, 800); text('합계금액', M + BL / 2, y + BH / 2 - (doc.vat === 'none' ? 0 : 13), 'center');
+  if (doc.vat !== 'none') { font(19); text('(부가세 포함)', M + BL / 2, y + BH / 2 + 22, 'center', SUB); }
   const words = wonWords(c.total), nums = '₩' + won(c.total);
-  fitFont(ctx, words, CW - BL - 40, 30, 700); text(words, M + BL + 22, y + 38, 'left');
-  fitFont(ctx, nums, CW - BL - 40, 38, 800); text(nums, M + BL + 22, y + 82, 'left', MAIN);
-  y += BH + 26;
+  fitFont(ctx, nums, 360, 40, 800); const nw = ctx.measureText(nums).width;
+  text(nums, R - 24, y + BH / 2, 'right', MAIN);
+  fitFont(ctx, words, CW - BL - nw - 80, 29, 700); text(words, M + BL + 24, y + BH / 2, 'left');
+  y += BH + 24;
 
-  y = itemsTable(y) + 30;
-  y = memoBox(y, '안내');
-  if (accText()) {
-    const h = 70;
-    box(M, y, CW, h, SOFT, LINE);
-    font(22, 700); text('입금 계좌', M + 20, y + h / 2, 'left', SUB);
-    fitFont(ctx, accText(), CW - 170, 26, 700); text(accText(), M + 150, y + h / 2, 'left');
-    y += h + 18;
+  // 품목 표: 품목이 적어도 표가 비어 보이지 않게 6줄을 채우고 「이하 여백」 표시
+  const cols = [70, 0, 110, 170, 200]; cols[1] = CW - cols[0] - cols[2] - cols[3] - cols[4];
+  const cx = [M]; cols.forEach((w, i) => cx.push(cx[i] + w));
+  const HH = 56, MINR = 6;
+  box(M, y, CW, HH, HEAD, null);
+  font(23, 700);
+  ['번호', '품   명', '수량', '단가', '금액'].forEach((h, i) => text(h, cx[i] + cols[i] / 2, y + HH / 2, 'center'));
+  hline(M, R, y, 2.5, INK); hline(M, R, y + HH, 1.5, INK);
+  const top = y; y += HH;
+  doc.items.forEach((it, i) => {
+    font(25);
+    const lines = wrap(ctx, it.name, cols[1] - 24);
+    const h = Math.max(58, lines.length * 33 + 24);
+    font(23); text(String(i + 1), cx[0] + cols[0] / 2, y + h / 2, 'center', SUB);
+    font(25); lines.forEach((ln, j) => text(ln, cx[1] + 14, y + h / 2 + (j - (lines.length - 1) / 2) * 33, 'left'));
+    const q = num(it.qty); text(q % 1 ? String(q) : q.toLocaleString('ko-KR'), cx[2] + cols[2] / 2, y + h / 2, 'center');
+    text(won(num(it.price)), cx[4] - 14, y + h / 2, 'right');
+    font(25, 700); text(won(Math.round(q * num(it.price))), cx[5] - 14, y + h / 2, 'right');
+    y += h; hline(M, R, y, 1, THIN);
+  });
+  for (let i = doc.items.length; i < MINR; i++) {
+    const h = 54;
+    if (i === doc.items.length) { font(21); text('- 이하 여백 -', cx[1] + cols[1] / 2, y + h / 2, 'center', '#a3a19b'); }
+    y += h; hline(M, R, y, 1, THIN);
+  }
+  for (let i = 1; i < cols.length; i++) vline(cx[i], top, y, 1, THIN);
+  hline(M, R, y, 1.5, INK);
+  // 합계 줄: 공급가액 · 부가세 · 합계를 한 줄에
+  const sums = doc.vat === 'none' ? [['합  계', c.total, 1]] : [['공급가액', c.supply], ['부 가 세', c.vat], ['합  계', c.total, 1]];
+  const SH2 = 64, pw = CW / sums.length, pl = sums.length === 1 ? 200 : 116;
+  sums.forEach((s, i) => {
+    const x = M + i * pw;
+    box(x, y, pl, SH2, s[2] ? HEAD : SOFT, null);
+    if (i) vline(x, y, y + SH2, 1.5, LINE);
+    vline(x + pl, y, y + SH2, 1, THIN);
+    font(22, 700); text(s[0], x + pl / 2, y + SH2 / 2, 'center', s[2] ? INK : SUB);
+    fitFont(ctx, won(s[1]), pw - pl - 30, s[2] ? 29 : 26, s[2] ? 800 : 600);
+    text(won(s[1]), x + pw - 16, y + SH2 / 2, 'right', s[2] ? MAIN : INK);
+  });
+  y += SH2; hline(M, R, y, 2.5, INK);
+  y += 26;
+
+  // 안내 · 입금 계좌: 한 표로
+  const info = [];
+  if ((doc.memo || '').trim()) info.push([isQ ? '안  내' : '비  고', doc.memo.trim(), 400]);
+  if (accText()) info.push(['입금 계좌', accText(), 700]);
+  if (info.length) {
+    const IL = 130, top2 = y;
+    info.forEach(r => { font(24, r[2]); r.lines = wrap(ctx, r[1], CW - IL - 36); r.h = Math.max(64, r.lines.length * 36 + 28); });
+    const ih = info.reduce((a, r) => a + r.h, 0);
+    box(M, y, IL, ih, SOFT, null);
+    info.forEach((r, i) => {
+      if (i) hline(M, R, y, 1, THIN);
+      font(22, 700); text(r[0], M + IL / 2, y + r.h / 2, 'center', SUB);
+      font(24, r[2]); r.lines.forEach((ln, j) => text(ln, M + IL + 18, y + r.h / 2 + (j - (r.lines.length - 1) / 2) * 36, 'left'));
+      y += r.h;
+    });
+    vline(M + IL, top2, y, 1, THIN);
+    box(M, top2, CW, ih, null, INK, 1.5);
+    y += 8;
   }
   return footer(y);
 }
@@ -1175,6 +1303,29 @@ if (new URLSearchParams(location.search).get('demo') === '2') {
   cur.items.push({ name: '욕실 타일 전면 교체 및 방수 공사 (벽·바닥 포함, 자재비와 인건비 일체)', qty: '1', price: '3,250,000' });
 }
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+{
+  const qp = new URLSearchParams(location.search);
+  if (qp.get('doc')) {
+    try {
+      const d = JSON.parse(decodeURIComponent(escape(atob(qp.get('doc')))));
+      if (d && d.type && Array.isArray(d.items)) {
+        cur = d; LS.set('cur', cur);
+        if (location.hash !== '#write' && location.hash !== '#preview') location.hash = '#preview';
+      }
+    } catch (e) {}
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+  if (IN_APP) {
+    $('#inappBar').hidden = false;
+    $('#inappBtn').hidden = !CAN_JUMP;
+    if (!CAN_JUMP) $('#inappBar p').textContent = '다른 앱 안에서 열려 있어 바로 보내기가 되지 않습니다. 메뉴에서 「Safari로 열기」를 눌러 주세요.';
+    else if (!IN_KAKAO) $('#inappBar p').textContent = '다른 앱 안에서 열려 있어 「카카오톡으로 보내기」가 되지 않습니다.';
+    if (CAN_JUMP && !qp.has('stay') && !sessionStorage.getItem(KEY + 'out')) {   // 처음 열 때 한 번만 자동으로 넘김
+      try { sessionStorage.setItem(KEY + 'out', '1'); } catch (e) {}
+      openOutside();
+    }
+  }
+}
 render();
 </script>
 </body>
