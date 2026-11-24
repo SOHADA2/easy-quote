@@ -43,6 +43,7 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 140px}
 .hint{color:var(--sub);font-size:.88rem;margin:6px 0 0}
 label.f{display:block;font-weight:700;margin:16px 0 6px}
 label.f:first-child{margin-top:0}
+#bizBox label.f:first-child{margin-top:16px}
 label.f small{font-weight:400;color:var(--sub);font-size:.85rem}
 input.t,select.t,textarea.t{width:100%;border:2px solid #bdb8ad;border-radius:8px;background:#fff;
   padding:12px 12px;font-size:1.05rem;min-height:56px}
@@ -198,9 +199,25 @@ textarea.t{min-height:96px;resize:vertical}
         <button data-type="contract" hidden>계약서</button>
       </div>
 
-      <label class="f" for="wCustomer" id="lblCust">받는 분 <small>(손님 이름 또는 상호)</small></label>
-      <input class="t" id="wCustomer" list="custList" autocomplete="off" placeholder="예) 김철수 / 행복식당">
+      <label class="f">받는 분은</label>
+      <div class="seg" id="ckSeg">
+        <button data-ck="p">개인</button>
+        <button data-ck="b">사업자</button>
+      </div>
+
+      <label class="f" for="wCustomer" id="lblCust">손님 이름</label>
+      <input class="t" id="wCustomer" list="custList" autocomplete="off" placeholder="예) 김철수">
       <datalist id="custList"></datalist>
+
+      <div id="bizBox" hidden>
+        <label class="f" for="bBiz">사업자등록번호</label>
+        <input class="t" id="bBiz" inputmode="numeric" placeholder="000-00-00000">
+        <label class="f" for="bOwner">대표자</label>
+        <input class="t" id="bOwner" placeholder="예) 홍길동">
+        <label class="f" for="bAddr">주소 <small>(선택)</small></label>
+        <input class="t" id="bAddr" placeholder="사업장 주소">
+        <p class="hint">전에 보낸 적 있는 상호를 고르면 등록번호·대표자·주소가 자동으로 채워집니다.</p>
+      </div>
 
       <label class="f" for="wDate" id="lblDate">날짜</label>
       <input class="t" id="wDate" type="date">
@@ -484,7 +501,7 @@ function payPlan(doc) {
 }
 function signKey(doc) {             // 서명한 뒤 내용이 바뀌었는지 확인용
   const ct = Object.assign({}, doc.ct); delete ct.sign; delete ct.signKey;
-  return JSON.stringify([doc.customer, doc.date, doc.items, doc.vat, doc.memo, ct]);
+  return JSON.stringify([doc.customer, doc.date, doc.items, doc.vat, doc.memo, ct, doc.ck === 'b' ? doc.cb : null]);
 }
 function calc(doc) {
   const sum = doc.items.reduce((a, it) => a + Math.round(num(it.qty) * num(it.price)), 0);
@@ -580,13 +597,46 @@ function enterWrite() {
 }
 function saveCur() { LS.set('cur', cur); }
 
+/* 받는 분: 개인(ck 'p') / 사업자(ck 'b', cb = 등록번호·대표자·주소) */
+function applyCustUI() {
+  const isB = cur.ck === 'b', isC = cur.type === 'contract';
+  $$('#ckSeg button').forEach(b => b.classList.toggle('on', b.dataset.ck === (isB ? 'b' : 'p')));
+  $('#bizBox').hidden = !isB;
+  $('#lblCust').innerHTML = isB
+    ? (isC ? '상호 <small>(공사를 맡기는 회사·가게)</small>' : '상호 <small>(회사·가게 이름)</small>')
+    : (isC ? '손님 이름 <small>(공사를 맡기는 분)</small>' : '손님 이름');
+  $('#wCustomer').placeholder = isB ? '예) 행복식당 / (주)대한건설' : '예) 김철수';
+  const cb = cur.cb || {};
+  $('#bBiz').value = cb.biz || ''; $('#bOwner').value = cb.owner || ''; $('#bAddr').value = cb.addr || '';
+}
+$('#ckSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  cur.ck = b.dataset.ck;
+  if (cur.ck === 'b' && !cur.cb) cur.cb = { biz: '', owner: '', addr: '' };
+  applyCustUI(); saveCur();
+});
+[['bBiz', 'biz'], ['bOwner', 'owner'], ['bAddr', 'addr']].forEach(([id, k]) => $('#' + id).addEventListener('input', e => {
+  if (k === 'biz') e.target.value = fmtBiz(e.target.value);
+  cur.cb = cur.cb || {}; cur.cb[k] = e.target.value; saveCur();
+}));
+// 전에 사업자로 보낸 상호를 고르면 정보 자동 채움
+$('#wCustomer').addEventListener('change', e => {
+  const n = e.target.value.trim(); if (!n) return;
+  const prev = DOCS.find(d => d.id !== cur.id && (d.customer || '').trim() === n && d.ck === 'b' && d.cb);
+  if (!prev) return;
+  const cb = cur.cb || {};
+  if (cur.ck === 'b' && (cb.biz || cb.owner || cb.addr)) return;
+  cur.ck = 'b'; cur.cb = Object.assign({}, prev.cb);
+  applyCustUI(); saveCur(); toast('전에 보낸 사업자 정보를 채웠습니다.');
+});
+
 const CF = { cTitle: 'title', cPlace: 'place', cPhone: 'phone', cStart: 'start', cEnd: 'end', cDep: 'dep', cMid: 'mid', cBal: 'bal', cWar: 'war' };
 function applyTypeUI() {
   const isC = cur.type === 'contract';
   $('#typeSeg').classList.toggle('three', HAS_CONTRACT);
   $('#typeSeg [data-type="contract"]').hidden = !HAS_CONTRACT;
   $('#ctCard').hidden = !isC; $('#signCard').hidden = !isC;
-  $('#lblCust').innerHTML = isC ? '손님 이름 <small>(공사를 맡기는 분)</small>' : '받는 분 <small>(손님 이름 또는 상호)</small>';
+  applyCustUI();
   $('#lblDate').textContent = isC ? '계약하는 날' : '날짜';
   $('#lblMemo').innerHTML = isC ? '특약사항 <small>(따로 약속한 내용 · 없으면 비워 두세요)</small>' : '안내 문구 <small>(없으면 비워 두세요)</small>';
   $('#wMemo').placeholder = isC ? '예) 기존 타일 철거·폐기물 처리 포함' : '예) 견적 유효기간: 발행일로부터 30일';
@@ -1049,7 +1099,11 @@ function drawDoc(ctx, doc, H) {
     if (SET.addr) sRows.push(['주  소', SET.addr]);
     if (SET.phone) sRows.push(['연 락 처', SET.phone]);
     sRows.push(['도  장', '', 1]);
-    const A = col(M, '도급인 (손님)', [['성  명', cust], ['연 락 처', ct.phone], ['서  명', '', 1]], signImg, '(서명)', false);
+    const cbz = doc.cb || {};
+    const aRows = doc.ck === 'b'
+      ? [['상  호', cust], ['대 표 자', cbz.owner || ''], ...(cbz.biz ? [['등록번호', cbz.biz]] : []), ...(cbz.addr ? [['주  소', cbz.addr]] : []), ['연 락 처', ct.phone], ['서  명', '', 1]]
+      : [['성  명', cust], ['연 락 처', ct.phone], ['서  명', '', 1]];
+    const A = col(M, '도급인 (손님)', aRows, signImg, '(서명)', false);
     const B = col(M + BW + 24, '수급인 (업체)', sRows, stampImg, '(인)', true);
     const SH = Math.max(A.h, B.h);
     [A, B].forEach(S => {
@@ -1092,32 +1146,60 @@ function drawDoc(ctx, doc, H) {
   if (SET.phone) rows.push(['연 락 처', SET.phone]);
   font(24);
   let rh = rows.map(r => { r.lines = wrap(ctx, r[1], VW - 24); return Math.max(54, r.lines.length * 31 + 22); });
+  // 왼쪽: 받는 분 — 사업자면 「공급받는자」 표(상호·등록번호·대표자·주소)
+  const isB = doc.ck === 'b', cb = doc.cb || {};
+  const LV = isB ? VC : 0, LX2 = M + LV + LBW, LVW = M + LW - LX2;
   const cust = (doc.customer || '').trim();
-  const custW = LW - LBW - 32 - 56;
-  let cs = 36; font(cs, 800); let cl = wrap(ctx, cust, custW);
-  if (cl.length > 2) { cs = 30; font(cs, 800); cl = wrap(ctx, cust, custW + 10); }
-  if (cl.length > 3) { cs = 26; font(cs, 800); cl = wrap(ctx, cust, custW + 16); }
+  const custW = LVW - 32 - 56;
+  let cs = isB ? 32 : 36; font(cs, 800); let cl = wrap(ctx, cust, custW);
+  if (cl.length > 2) { cs = 28; font(cs, 800); cl = wrap(ctx, cust, custW + 10); }
+  if (cl.length > 3) { cs = 25; font(cs, 800); cl = wrap(ctx, cust, custW + 16); }
   const dH = 62, leadH = 64;
-  const rsum = rh.reduce((a, b) => a + b, 0);
-  const tH = Math.max(rsum, dH + leadH + cl.length * (cs + 10) + 44);
+  const lrows = [{ l: isQ ? '견적일자' : '거래일자', v: [dateKo(doc.date)], h: dH, date: 1 }];
+  const custRow = { l: isB ? '상  호' : (isQ ? '수  신' : '받 는 분'), cust: 1, h: cl.length * (cs + 10) + (isB ? 26 : 44) };
+  lrows.push(custRow);
+  if (isB) {
+    font(24);
+    [['등록번호', cb.biz], ['대 표 자', cb.owner], ['주  소', cb.addr]].forEach(([l, v]) => {
+      if (!(v || '').trim()) return;
+      const ls = wrap(ctx, v.trim(), LVW - 24); lrows.push({ l, v: ls, h: Math.max(54, ls.length * 31 + 22) });
+    });
+  }
+  const rsum = rh.reduce((a, b) => a + b, 0), lsum = lrows.reduce((a, r) => a + r.h, 0) + leadH;
+  const tH = Math.max(rsum, lsum);
   rh = rh.map(h => h + (tH - rsum) / rows.length);
-  const custH = tH - dH - leadH;
+  custRow.h += tH - lsum;
+  const bodyH = tH - leadH;
 
-  // 왼쪽 표
-  box(M, y, LBW, dH + custH, SOFT, null);
+  // 왼쪽 표 그리기
+  box(M, y, LV + LBW, bodyH, SOFT, null);
   box(M, y, LW, tH, null, INK, 2);
-  vline(M + LBW, y, y + dH + custH); hline(M, M + LW, y + dH); hline(M, M + LW, y + dH + custH);
-  font(22, 700);
-  text(isQ ? '견적일자' : '거래일자', M + LBW / 2, y + dH / 2, 'center', SUB);
-  text(isQ ? '수  신' : '받 는 분', M + LBW / 2, y + dH + custH / 2, 'center', SUB);
-  font(25); text(dateKo(doc.date), M + LBW + 16, y + dH / 2, 'left');
-  font(cs, 800);
-  cl.forEach((ln, i) => {
-    const yy = y + dH + custH / 2 + (i - (cl.length - 1) / 2) * (cs + 10);
-    text(ln, M + LBW + 16, yy, 'left');
-    if (i === cl.length - 1) { const w = ctx.measureText(ln).width; font(Math.max(22, cs - 12), 600); text('귀하', M + LBW + 16 + w + 10, yy + 2, 'left', SUB); font(cs, 800); }
+  if (isB) {
+    vline(M + LV, y, y + bodyH);
+    font(22, 700);
+    const ch = [...'공급받는자'], gap = Math.min(34, bodyH / 6);
+    ch.forEach((c2, i) => text(c2, M + LV / 2, y + bodyH / 2 + (i - (ch.length - 1) / 2) * gap, 'center'));
+  }
+  vline(LX2, y, y + bodyH);
+  let ly = y;
+  lrows.forEach((r, i) => {
+    if (i) hline(M + LV, M + LW, ly);
+    font(22, 700); text(r.l, M + LV + LBW / 2, ly + r.h / 2, 'center', SUB);
+    if (r.cust) {
+      font(cs, 800);
+      cl.forEach((ln, j) => {
+        const yy = ly + r.h / 2 + (j - (cl.length - 1) / 2) * (cs + 10);
+        text(ln, LX2 + 16, yy, 'left');
+        if (j === cl.length - 1) { const w = ctx.measureText(ln).width; font(Math.max(22, cs - 12), 600); text(isB ? '귀중' : '귀하', LX2 + 16 + w + 10, yy + 2, 'left', SUB); font(cs, 800); }
+      });
+    } else {
+      font(r.date ? 25 : 24, r.l === '대 표 자' ? 700 : 400);
+      r.v.forEach((ln, j) => text(ln, LX2 + 14, ly + r.h / 2 + (j - (r.v.length - 1) / 2) * 31, 'left'));
+    }
+    ly += r.h;
   });
-  font(24); text(t.lead, M + LW / 2, y + dH + custH + leadH / 2, 'center', INK);
+  hline(M, M + LW, y + bodyH);
+  font(24); text(t.lead, M + LW / 2, y + bodyH + leadH / 2, 'center', INK);
 
   // 오른쪽 공급자 표
   box(TX, y, VC, tH, SOFT, null); box(TX + VC, y, LC, tH, SOFT, null); box(TX, y, TW, tH, null, INK, 2);
