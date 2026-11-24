@@ -14,7 +14,7 @@ for (const f of fs.readdirSync(path.join(root, 'shops')).filter(f => f.endsWith(
   const dir = path.join(root, shop.id);
   fs.mkdirSync(dir, { recursive: true });
 
-  const preset = { id: shop.id, appName: shop.appName, contract: !!shop.contract, settings: shop.settings, items: shop.items || [] };
+  const preset = { id: shop.id, appName: shop.appName, contract: !!shop.contract, settings: shop.settings, items: shop.items || [], old: shop.old || {} };
   let html = base;
   for (const a of ['<title>간편 견적서</title>', 'content="간편 견적서">', '<h1 id="topTitle">간편 견적서</h1>']) must(html, a);
   html = html
@@ -33,7 +33,14 @@ for (const f of fs.readdirSync(path.join(root, 'shops')).filter(f => f.endsWith(
       { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
     ],
   }, null, 2));
-  fs.writeFileSync(path.join(dir, 'sw.js'), swBase.replace(/const CACHE = '[^']*'/, `const CACHE = 'easy-quote-${shop.id}-v1'`));
+  let sw = swBase.replace(/const CACHE = '[^']*'/, `const CACHE = 'easy-quote-${shop.id}-v1'`);
+  const st = shop.settings.stamp;              // 기본 도장(업체 폴더의 png)도 오프라인용으로 저장
+  if (st && !st.startsWith('data:')) {
+    if (!fs.existsSync(path.join(dir, st))) throw new Error('도장 파일 없음: ' + shop.id + '/' + st);
+    sw = sw.replace("'./icon-180.png'];", `'./icon-180.png', './${st}'];`);
+    if (!sw.includes(st)) throw new Error('sw.js에 도장 넣기 실패');
+  }
+  fs.writeFileSync(path.join(dir, 'sw.js'), sw);
   for (const s of [180, 192, 512]) {            // 전용 아이콘이 없으면 기본 아이콘을 씀 (tools/make-icons.ps1)
     const icon = path.join(dir, `icon-${s}.png`);
     if (!fs.existsSync(icon)) fs.copyFileSync(path.join(root, `icon-${s}.png`), icon);
